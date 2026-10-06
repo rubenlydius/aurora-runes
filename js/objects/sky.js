@@ -24,7 +24,8 @@ export const createSky = ({ iTime, iResolution }) => {
   );
 
   const mesh = new THREE.Mesh(geometry, material);
-  // always drawn first, behind everything else
-  mesh.renderOrder = -1;
+  // drawn after the other opaque objects: the depth test then skips the expensive aurora shader
+  // for every pixel that is already covered (water, later ground, ship...)
+  mesh.renderOrder = 1;
   return mesh;
 };
