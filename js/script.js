@@ -6,10 +6,11 @@ import Stats from 'three/addons/libs/stats.module.js';
 
 import { DEBUG } from './constants/debug.js';
 import { createSky, SKY_RADIUS } from './objects/sky.js';
+import { createWater } from './objects/water.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, controls, stats;
-let sky;
+let sky, water;
 const timer = new THREE.Timer();
 
 // uniforms are TSL nodes, we update their .value every frame
@@ -36,6 +37,10 @@ const init = () => {
 
   sky = createSky(uniforms);
   scene.add(sky);
+
+  // shares the sky's uniforms, so the reflection moves in sync
+  water = createWater(uniforms);
+  scene.add(water);
 
   if (DEBUG) {
     controls = new OrbitControls(camera, renderer.domElement);
