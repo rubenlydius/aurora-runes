@@ -1,109 +1,79 @@
-// https://www.shadertoy.com/view/XsVSDz
+// "Auroras" by nimitz — https://www.shadertoy.com/view/XtGGRt
 import * as THREE from 'three/webgpu';
-import { wgslFn, uniform, uv, texture } from 'three/tsl';
+import { uniform } from 'three/tsl';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import plasmaBufferShader from './shaders/plasma/buffer.wgsl?raw';
-import plasmaFragmentShader from './shaders/plasma/fragment.wgsl?raw';
+import { DEBUG } from './constants/debug.js';
+import { createSky, SKY_RADIUS } from './objects/sky.js';
 
 const $canvas = document.getElementById('webgl');
-let renderer, camera, scene, controls;
-let clock = new THREE.Clock();
-let plane, material;
-let renderTarget, rtScene, rtCamera, rtMaterial;
-const mouse = new THREE.Vector2();
+let renderer, camera, scene, controls, stats;
+let sky;
+const timer = new THREE.Timer();
 
 // uniforms are TSL nodes, we update their .value every frame
-const rtUniforms = {
-  iTime: uniform(0),
-  iMouse: uniform(new THREE.Vector2(0, 0)),
-  iResolution: uniform(new THREE.Vector2(2, 2)),
-};
 const uniforms = {
   iTime: uniform(0),
-  iMouse: uniform(new THREE.Vector2(0, 0)),
   iResolution: uniform(new THREE.Vector2(2, 2)),
 };
 
 const init = () => {
-  renderer = new THREE.WebGPURenderer({canvas: $canvas, alpha: false});
-  // shadertoy shaders output display-ready colors, so skip the linear to sRGB conversion
-  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  // wgslFn shaders don't run on the WebGL2 fallback
+  if (!navigator.gpu) {
+    document.body.innerHTML = '<p style="color:#fff;font-family:sans-serif;padding:2rem">This experience needs WebGPU. Open it in Chrome or Edge.</p>';
+    document.body.style.background = '#000';
+    return;
+  }
 
-  // shader renderer
-  const effectPlaneGeometry = new THREE.PlaneGeometry(2, 2);
-  const plasmaBuffer = wgslFn(plasmaBufferShader);
-  rtMaterial = new THREE.MeshBasicNodeMaterial();
-  rtMaterial.colorNode = plasmaBuffer({
-    fragCoord: uv().mul(rtUniforms.iResolution),
-    iTime: rtUniforms.iTime,
-    iMouse: rtUniforms.iMouse,
-    iResolution: rtUniforms.iResolution,
-  });
-  const effectPlane = new THREE.Mesh(effectPlaneGeometry, rtMaterial);
-  rtCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  rtScene = new THREE.Scene();
-  rtScene.add(effectPlane);
-  renderTarget = new THREE.RenderTarget(100, 100, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-  });
-  // end shader renderer
+  renderer = new THREE.WebGPURenderer({ canvas: $canvas, alpha: false });
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
-  camera.position.set(0, 0, 10);
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, SKY_RADIUS * 2);
+  // temporary default view, step 3 replaces it with the fixed cursor-drift camera
+  camera.lookAt(0, 0.35, -1);
 
   scene = new THREE.Scene();
 
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+  sky = createSky(uniforms);
+  scene.add(sky);
 
-  const geometry = new THREE.PlaneGeometry(2, 2);
-  const plasma = wgslFn(plasmaFragmentShader);
-  // the render target texture is passed twice: once as texture, once as sampler
-  const iChannel0 = texture(renderTarget.texture);
-  material = new THREE.MeshBasicNodeMaterial();
-  material.colorNode = plasma({
-    fragCoord: uv().mul(uniforms.iResolution),
-    iTime: uniforms.iTime,
-    iMouse: uniforms.iMouse,
-    iResolution: uniforms.iResolution,
-    iChannel0: iChannel0,
-    iChannel0Sampler: iChannel0,
-  });
-  plane = new THREE.Mesh(geometry, material);
-  scene.add(plane);
+  if (DEBUG) {
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    // orbit a point just in front of the camera, so it mostly rotates in place
+    controls.target.set(0, 0.35, -1);
+    controls.update();
+
+    // fps counter, click it to switch to frame time (ms)
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
+  }
 
   window.addEventListener('resize', resize);
   resize();
-
-  window.addEventListener('mousemove', (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-  });
 
   renderer.setAnimationLoop(draw);
 };
 
 const draw = () => {
-  const elapsedTime = clock.getElapsedTime();
+  timer.update();
+  uniforms.iTime.value = timer.getElapsed();
 
-  rtUniforms.iTime.value = elapsedTime;
-  rtUniforms.iMouse.value.set(mouse.x, mouse.y);
-  uniforms.iTime.value = elapsedTime * 2;
-  uniforms.iMouse.value.set(mouse.x, mouse.y);
+  if (controls) controls.update();
+  // keep the camera at the center of the sky sphere
+  sky.position.copy(camera.position);
 
-  renderer.setRenderTarget(renderTarget);
-  renderer.render(rtScene, rtCamera);
-  renderer.setRenderTarget(null);
-
-  controls.update();
   renderer.render(scene, camera);
+
+  if (stats) stats.update();
 };
 
 const resize = () => {
-  renderer.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, false);
+  // the aurora raymarches 50 steps per pixel and is soft anyway, so render at 1 pixel per CSS pixel
+  renderer.setPixelRatio(1);
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  renderer.getDrawingBufferSize(uniforms.iResolution.value);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 };
