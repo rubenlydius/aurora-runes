@@ -2,12 +2,13 @@
 import * as THREE from 'three/webgpu';
 import { uniform } from 'three/tsl';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
 import { DEBUG } from './constants/debug.js';
 import { createSky, SKY_RADIUS } from './objects/sky.js';
 
 const $canvas = document.getElementById('webgl');
-let renderer, camera, scene, controls;
+let renderer, camera, scene, controls, stats;
 let sky;
 const timer = new THREE.Timer();
 
@@ -43,6 +44,10 @@ const init = () => {
     // orbit a point just in front of the camera, so it mostly rotates in place
     controls.target.set(0, 0.35, -1);
     controls.update();
+
+    // fps counter, click it to switch to frame time (ms)
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
   }
 
   window.addEventListener('resize', resize);
@@ -60,11 +65,13 @@ const draw = () => {
   sky.position.copy(camera.position);
 
   renderer.render(scene, camera);
+
+  if (stats) stats.update();
 };
 
 const resize = () => {
-  // the aurora raymarches 50 steps per pixel, so cap the pixel ratio
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // the aurora raymarches 50 steps per pixel and is soft anyway, so render at 1 pixel per CSS pixel
+  renderer.setPixelRatio(1);
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.getDrawingBufferSize(uniforms.iResolution.value);
   camera.aspect = window.innerWidth / window.innerHeight;

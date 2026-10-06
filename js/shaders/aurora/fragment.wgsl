@@ -83,7 +83,7 @@ fn aurora(ro: vec3f, rd: vec3f, fragCoord: vec2f, iTime: f32) -> vec4f {
     pt -= ofs;
     let bpos = ro + pt * rd;
     let p = bpos.zx;
-    let rzt = triNoise2d(p, 0.06, iTime);
+    let rzt = triNoise2d(p, 0.25, iTime);
     let col2 = vec4f((sin(1.0 - vec3f(2.15, -0.5, 1.2) + i * 0.043) * 0.5 + 0.5) * rzt, rzt);
     avgCol = mix(avgCol, col2, 0.5);
     col += avgCol * exp2(-i * 0.065 - 2.5) * smoothstep(0.0, 5.0, i);
