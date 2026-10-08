@@ -12,6 +12,10 @@ fn waterShader(
   rippleScale: f32,
   rippleSpeed: f32,
   rippleFadeDistance: f32,
+  shipPosition: vec3f,
+  shipRotation: f32,
+  shipReflectionSize: vec2f,
+  shipReflectionStrength: f32,
 ) -> vec4f {
   // view direction: from the camera through this point on the water
   let viewDir = normalize(worldPos - camPos);
@@ -36,7 +40,11 @@ fn waterShader(
   let reflDir = vec3f(bounced.x, max(bounced.y, 0.001), bounced.z);
 
   // the sky seen along the bounced ray, computed exactly like the sky sphere does
-  let reflection = auroraShader(reflDir, fragCoord, iTime, iResolution).rgb;
+  let sky = auroraShader(reflDir, fragCoord, iTime, iResolution).rgb;
+
+  // fake ship reflection: the dark hull blocks the sky, so darken the reflection in a soft patch under it
+  let shipShadow = shipPatch(worldPos.xz, shipPosition.xz, shipRotation, shipReflectionSize);
+  let reflection = sky * (1.0 - shipReflectionStrength * shipShadow);
 
   // dark looking straight down, mirror-like toward the horizon
   let cosTheta = max(dot(-viewDir, normal), 0.0);
@@ -50,6 +58,17 @@ fn fresnelSchlick(cosTheta: f32, f0: f32) -> f32 {
   // (1 - cosTheta)^5 written out: pow() is undefined for a base of 0 in WGSL
   let m = 1.0 - cosTheta;
   return f0 + (1.0 - f0) * m * m * m * m * m;
+}
+
+// 1 under the ship, fading to 0 at the edge of an ellipse aligned with the hull
+fn shipPatch(p: vec2f, center: vec2f, rotationY: f32, halfSize: vec2f) -> f32 {
+  let d = p - center;
+  // the hull's local axes on the water after three.js' rotation.y: x across it, z along its length
+  let across = dot(d, vec2f(cos(rotationY), -sin(rotationY)));
+  let along = dot(d, vec2f(sin(rotationY), cos(rotationY)));
+  // 0 at the center, 1 on the ellipse's edge (max() avoids dividing by 0)
+  let e = length(vec2f(across, along) / max(halfSize, vec2f(0.001)));
+  return 1.0 - smoothstep(0.3, 1.0, e);
 }
 
 // three noise layers: bigger and slower first, each one smaller, weaker and drifting another way

@@ -11,7 +11,7 @@ export const createSky = ({ iTime, iResolution }) => {
   const geometry = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   const aurora = wgslFn(auroraFragmentShader);
 
-  const material = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false });
+  const material = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, fog: false });
   // the shader outputs display-ready (sRGB) colors, convert them to the working color space
   material.colorNode = colorSpaceToWorking(
     aurora({
