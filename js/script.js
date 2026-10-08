@@ -17,7 +17,7 @@ import { SHIP_REFLECTION } from './constants/scene.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, controls, stats;
-let sky, water, ship, sail, lighting;
+let sky, water, ship, sail, shipUpdate, lighting;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -69,6 +69,7 @@ const init = () => {
     .then((result) => {
       ship = result.ship;
       sail = result.sail;
+      shipUpdate = result.update;
       applyToneMapping(ship, { renderer, exposure: uniforms.exposure });
       scene.add(ship);
     })
@@ -104,6 +105,7 @@ const draw = () => {
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
+    shipUpdate(uniforms.iTime.value);
     uniforms.shipPosition.value.copy(ship.position);
     uniforms.shipRotation.value = ship.rotation.y;
     uniforms.shipReflectionSize.value.set(shipReflection.width, shipReflection.length).multiplyScalar(ship.scale.x);
