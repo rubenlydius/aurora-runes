@@ -7,7 +7,8 @@ import { SHIP_POSITION, SHIP_ROTATION_Y, SHIP_SCALE } from '../constants/scene.j
 export const createShip = async ({ gui } = {}) => {
   const loader = new GLTFLoader();
   // BASE_URL is '/aurora-runes/' on GitHub Pages, so never use a root-absolute path here
-  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship.glb`);
+  // const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship.glb`);
+  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking_ship3.glb`);
 
   const ship = gltf.scene;
   ship.name = 'Ship';
@@ -17,7 +18,7 @@ export const createShip = async ({ gui } = {}) => {
 
   // kept for later (Kenaz burns the sail)
   const sail = ship.getObjectByName('Sail');
-  if (!sail) console.warn('ship.js: no object named "Sail" in viking-ship.glb');
+  if (!sail) console.warn('ship.js: no object named "Sail" in the ship model');
 
   if (gui) {
     const folder = gui.addFolder('Ship');

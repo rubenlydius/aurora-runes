@@ -14,7 +14,7 @@ import waterFragmentShader from '../shaders/water/fragment.wgsl?raw';
 import auroraFragmentShader from '../shaders/aurora/fragment.wgsl?raw';
 
 // calm fjord water that reflects the aurora sky, rippled in the fragment shader only
-export const createWater = ({ iTime, iResolution }) => {
+export const createWater = ({ iTime, iResolution, shipPosition, shipRotation, shipReflectionSize, shipReflectionStrength }) => {
   const geometry = new THREE.PlaneGeometry(WATER_SIZE, WATER_SIZE);
   // water main function first, the aurora code after it as helpers
   const water = wgslFn(waterFragmentShader + '\n' + auroraFragmentShader);
@@ -40,6 +40,10 @@ export const createWater = ({ iTime, iResolution }) => {
       rippleScale,
       rippleSpeed,
       rippleFadeDistance,
+      shipPosition,
+      shipRotation,
+      shipReflectionSize,
+      shipReflectionStrength,
     }),
     THREE.SRGBColorSpace,
   );

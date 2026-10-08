@@ -10,16 +10,29 @@ import { createSky, SKY_RADIUS } from './objects/sky.js';
 import { createWater } from './objects/water.js';
 import { createShip } from './objects/ship.js';
 import { createCamera, addCameraGui } from './objects/camera.js';
+import { createLighting } from './objects/lighting.js';
+import { applyToneMapping } from './utils/toneMapping.js';
+import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
+import { SHIP_REFLECTION } from './constants/scene.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, controls, stats;
-let sky, water, ship, sail;
+let sky, water, ship, sail, lighting;
+// copy, so the sliders don't change the constants
+const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
 
 // uniforms are TSL nodes, we update their .value every frame
 const uniforms = {
   iTime: uniform(0),
   iResolution: uniform(new THREE.Vector2(2, 2)),
+  auroraColor: uniform(new THREE.Color(AURORA_COLOR)),
+  exposure: uniform(TONE_MAPPING_EXPOSURE),
+  // fake ship reflection in the water, follows the ship every frame
+  shipPosition: uniform(new THREE.Vector3()),
+  shipRotation: uniform(0),
+  shipReflectionSize: uniform(new THREE.Vector2(1, 1)),
+  shipReflectionStrength: uniform(0),
 };
 
 const init = () => {
@@ -39,8 +52,10 @@ const init = () => {
   // sliders for tweaking constants, only in debug mode
   const gui = DEBUG ? new GUI() : null;
 
-  // temporary dim night light so the ship's lit materials aren't black; the sky and water ignore it
-  scene.add(new THREE.HemisphereLight(0x6a7fb0, 0x101018, 0.6));
+  // the sky and water shaders ignore lights, only the lit materials (ship) use them
+  lighting = createLighting({ auroraColor: uniforms.auroraColor, exposure: uniforms.exposure, gui });
+  scene.add(...lighting.lights);
+  scene.fog = lighting.fog;
 
   sky = createSky(uniforms);
   scene.add(sky);
@@ -54,6 +69,7 @@ const init = () => {
     .then((result) => {
       ship = result.ship;
       sail = result.sail;
+      applyToneMapping(ship, { renderer, exposure: uniforms.exposure });
       scene.add(ship);
     })
     .catch((error) => console.error('Could not load the Viking ship', error));
@@ -64,6 +80,11 @@ const init = () => {
     controls.dampingFactor = 0.05;
     // also sets the orbit target to the point the camera looks at
     addCameraGui({ gui, camera, controls });
+
+    const reflectionFolder = gui.addFolder('Ship reflection');
+    reflectionFolder.add(shipReflection, 'strength', 0, 1, 0.01);
+    reflectionFolder.add(shipReflection, 'width', 0.1, 5, 0.05).name('half width');
+    reflectionFolder.add(shipReflection, 'length', 0.1, 10, 0.05).name('half length');
 
     // fps counter, click it to switch to frame time (ms)
     stats = new Stats();
@@ -79,6 +100,15 @@ const init = () => {
 const draw = () => {
   timer.update();
   uniforms.iTime.value = timer.getElapsed();
+  lighting.update(uniforms.iTime.value);
+
+  // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
+  if (ship) {
+    uniforms.shipPosition.value.copy(ship.position);
+    uniforms.shipRotation.value = ship.rotation.y;
+    uniforms.shipReflectionSize.value.set(shipReflection.width, shipReflection.length).multiplyScalar(ship.scale.x);
+    uniforms.shipReflectionStrength.value = shipReflection.strength;
+  }
 
   if (controls) controls.update();
   // keep the camera at the center of the sky sphere
