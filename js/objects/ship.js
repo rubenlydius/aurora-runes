@@ -8,7 +8,7 @@ export const createShip = async ({ gui } = {}) => {
   const loader = new GLTFLoader();
   // BASE_URL is '/aurora-runes/' on GitHub Pages, so never use a root-absolute path here
   // const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship.glb`);
-  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking_ship3.glb`);
+  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship2.glb`);
 
   // the outer group holds the placement (constants, sliders), the model inside it rocks
   const ship = new THREE.Group();
