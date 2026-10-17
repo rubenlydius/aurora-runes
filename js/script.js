@@ -15,6 +15,7 @@ import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
 import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAIL } from './constants/aurora.js';
 import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
+import { createGestureInput } from './gestures/gestureInput.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
@@ -106,6 +107,9 @@ const init = () => {
 
   // in debug mode Shift + drag looks around, so the aurora pointer ignores those drags
   auroraPointer = createAuroraPointer({ canvas: $canvas, camera, uniforms, shiftLooksAround: DEBUG, gui });
+
+  // $P recognition of the spacebar drawings (logging only for now); record mode in debug
+  createGestureInput({ canvas: $canvas, debug: DEBUG });
 
   window.addEventListener('resize', resize);
   resize();
