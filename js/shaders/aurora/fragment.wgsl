@@ -8,6 +8,11 @@
 // pointerTrailPoints: the glow's recent path, one texel per point (xy = position, z = age 0..1),
 // newest first; pointerTrailCount says how many texels are in use.
 // radius and core size arrive already scaled for the pointer's distance, so they look similar everywhere
+// mood (shared with the water, animated by the rune effects): skyBrightness and skyTint multiply the final
+// color, auroraSpeed scales the aurora's animation time; the defaults 1, white, 1 leave the look unchanged
+// day (midnight sun): dayAmount 0..1 blends the night background toward a dawn gradient (dawnHorizonColor
+// -> dawnZenithColor, sRGB) and fades the aurora and stars out; a warm glow of size sunGlowSize (radians)
+// sits around sunDirection. dayAmount 0 leaves the night exactly as it was
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
@@ -24,41 +29,80 @@ fn auroraShader(
   pointerTrail: f32,
   pointerTrailPoints: texture_2d<f32>,
   pointerTrailCount: f32,
+  skyBrightness: f32,
+  skyTint: vec3f,
+  auroraSpeed: f32,
+  dayAmount: f32,
+  sunDirection: vec3f,
+  dawnHorizonColor: vec3f,
+  dawnZenithColor: vec3f,
+  sunGlowSize: f32,
 ) -> vec4f {
+  let auroraTime = iTime * auroraSpeed;
   let ro = vec3f(0.0, 0.0, -6.7);
-  var rd = normalize(rayDir);
+  let viewDir = normalize(rayDir);
+  var rd = viewDir;
+  // the water plane ends about 0.25° below the horizon (where it meets the sky sphere): just below the
+  // horizon, draw the horizon sky instead of the darker reflection, so it meets the far (fogged) water flush
+  let skyBand = rd.y > -0.02;
+  if (skyBand) {
+    rd = normalize(vec3f(rd.x, max(rd.y, 0.0), rd.z));
+  }
 
   let fade = smoothstep(0.0, 0.01, abs(rd.y)) * 0.1 + 0.9;
+  // how much night is left: the aurora and stars fade with it
+  let day = clamp(dayAmount, 0.0, 1.0);
+  let night = 1.0 - day;
   var col = bg(rd) * fade;
 
-  if (rd.y > 0.0) {
+  if (skyBand) {
     let result = aurora(
-      ro, rd, fragCoord, iTime,
+      ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
       pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
     );
-    let aur = smoothstep(vec4f(0.0), vec4f(1.5), result.col) * fade;
-    col += stars(rd, iResolution);
+    let aur = smoothstep(vec4f(0.0), vec4f(1.5), result.col) * fade * night;
+    col = mix(col, dawnSky(rd, dawnHorizonColor, dawnZenithColor), day);
+    col += stars(viewDir, iResolution) * night;
     // boost after the smoothstep above, which would otherwise cap the extra brightness at 1
     col = col * (1.0 - aur.a) + aur.rgb * (1.0 + pointerBoost * result.glow);
   } else {
     // reflections
     rd.y = abs(rd.y);
-    col = bg(rd) * fade * 0.6;
+    col = mix(bg(rd) * fade, dawnSky(rd, dawnHorizonColor, dawnZenithColor), day) * 0.6;
     let result = aurora(
-      ro, rd, fragCoord, iTime,
+      ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
       pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
     );
-    let aur = smoothstep(vec4f(0.0), vec4f(2.5), result.col);
-    col += stars(rd, iResolution) * 0.1;
+    let aur = smoothstep(vec4f(0.0), vec4f(2.5), result.col) * night;
+    col += stars(rd, iResolution) * 0.1 * night;
     col = col * (1.0 - aur.a) + aur.rgb * (1.0 + pointerBoost * result.glow);
     let pos = ro + ((0.5 - ro.y) / rd.y) * rd;
-    let nz2 = triNoise2d(pos.xz * vec2f(0.5, 0.7), 0.0, iTime);
-    col += mix(vec3f(0.2, 0.25, 0.5) * 0.08, vec3f(0.3, 0.3, 0.5) * 0.7, nz2 * 0.4);
+    let nz2 = triNoise2d(pos.xz * vec2f(0.5, 0.7), 0.0, auroraTime);
+    col += mix(vec3f(0.2, 0.25, 0.5) * 0.08, vec3f(0.3, 0.3, 0.5) * 0.7, nz2 * 0.4) * night;
   }
 
+  // the sun, on top of the dawn gradient (rd is mirrored below the horizon, so it reflects too)
+  col += sunGlow(rd, sunDirection, sunGlowSize, dawnHorizonColor) * day;
+
+  // mood, before the soft clip so a brighter sky still rolls off smoothly
+  col *= skyTint * skyBrightness;
+
   return vec4f(softClip(col), 1.0);
+}
+
+// dawn sky: horizon color low down, easing into the zenith color higher up
+fn dawnSky(rd: vec3f, horizon: vec3f, zenith: vec3f) -> vec3f {
+  return mix(horizon, zenith, smoothstep(0.0, 0.5, max(rd.y, 0.0)));
+}
+
+// soft sun: a bright core of about `size` radians plus a wide faint halo; softClip turns the core warm white
+fn sunGlow(rd: vec3f, sunDir: vec3f, size: f32, color: vec3f) -> vec3f {
+  let angle = acos(clamp(dot(rd, normalize(sunDir)), -1.0, 1.0));
+  let core = exp(-(angle * angle) / (size * size));
+  let halo = exp(-angle / (size * 4.0)) * 0.35;
+  return color * (core * 1.5 + halo);
 }
 
 // soft roll-off: unchanged below the knee, above it each channel eases toward 1 instead of clipping.

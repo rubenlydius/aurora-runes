@@ -32,6 +32,14 @@ export const createWater = ({
   pointerTrail,
   pointerTrailPoints,
   pointerTrailCount,
+  skyBrightness,
+  skyTint,
+  auroraSpeed,
+  dayAmount,
+  sunDirection,
+  dawnHorizonColor,
+  dawnZenithColor,
+  sunGlowSize,
 }) => {
   const geometry = new THREE.PlaneGeometry(WATER_SIZE, WATER_SIZE);
   // water main function first, the aurora code after it as helpers
@@ -73,6 +81,14 @@ export const createWater = ({
       pointerTrail,
       pointerTrailPoints,
       pointerTrailCount,
+      skyBrightness,
+      skyTint,
+      auroraSpeed,
+      dayAmount,
+      sunDirection,
+      dawnHorizonColor,
+      dawnZenithColor,
+      sunGlowSize,
     }),
     THREE.SRGBColorSpace,
   );

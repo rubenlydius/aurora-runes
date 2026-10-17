@@ -21,6 +21,14 @@ export const createSky = ({
   pointerTrail,
   pointerTrailPoints,
   pointerTrailCount,
+  skyBrightness,
+  skyTint,
+  auroraSpeed,
+  dayAmount,
+  sunDirection,
+  dawnHorizonColor,
+  dawnZenithColor,
+  sunGlowSize,
 }) => {
   const geometry = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   const aurora = wgslFn(auroraFragmentShader);
@@ -44,6 +52,14 @@ export const createSky = ({
       pointerTrail,
       pointerTrailPoints,
       pointerTrailCount,
+      skyBrightness,
+      skyTint,
+      auroraSpeed,
+      dayAmount,
+      sunDirection,
+      dawnHorizonColor,
+      dawnZenithColor,
+      sunGlowSize,
     }),
     THREE.SRGBColorSpace,
   );

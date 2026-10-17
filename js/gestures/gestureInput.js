@@ -1,10 +1,13 @@
 import { Point } from '../vendor/pdollar.js';
 import { createRecognizer } from './recognizer.js';
+import { GESTURE_THRESHOLD } from '../constants/gestures.js';
 
 // gesture recognition on the spacebar drawings; listens next to the aurora pointer, doesn't change it.
-// one session = one spacebar hold: every stroke drawn while it's held is part of the same gesture
-export const createGestureInput = ({ canvas, debug }) => {
+// one session = one spacebar hold: every stroke drawn while it's held is part of the same gesture.
+// a match dispatches a "gesture" event on window, detail { name, score } (js/effects/index.js listens)
+export const createGestureInput = ({ canvas, debug, gui }) => {
   const recognizer = createRecognizer();
+  const params = { threshold: GESTURE_THRESHOLD };
 
   // the current session while Space is held: { points: [Point], strokeId }, otherwise null
   let session = null;
@@ -81,11 +84,15 @@ export const createGestureInput = ({ canvas, debug }) => {
       console.log(`Saved template "${selectedName}" (${count} for this name)`);
     } else {
       const result = recognizer.recognize(points);
-      if (result) {
+      if (!result) {
+        console.log('No gesture templates loaded yet');
+      } else if (result.score >= params.threshold) {
         lastResult = result;
         console.log(`Gesture: ${result.name} (score ${result.score.toFixed(2)})`);
+        window.dispatchEvent(new CustomEvent('gesture', { detail: result }));
       } else {
-        console.log('No gesture templates loaded yet');
+        lastResult = { name: 'no match', score: result.score };
+        console.log(`No match (best: ${result.name}, score ${result.score.toFixed(2)})`);
       }
     }
     updateLabel();
@@ -117,6 +124,11 @@ export const createGestureInput = ({ canvas, debug }) => {
       }
       updateLabel();
     });
+  }
+
+  if (gui) {
+    const folder = gui.addFolder('Gestures');
+    folder.add(params, 'threshold', 0, 1, 0.01).name('match threshold');
   }
 
   // --- debug label ---

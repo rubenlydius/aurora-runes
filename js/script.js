@@ -9,13 +9,15 @@ import { createSky, SKY_RADIUS } from './objects/sky.js';
 import { createWater } from './objects/water.js';
 import { createShip } from './objects/ship.js';
 import { createCamera, createLookAround } from './objects/camera.js';
-import { createLighting } from './objects/lighting.js';
+import { createLighting, rawColorFromHex } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
 import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
+import { SUN_GLOW_SIZE, DAWN_HORIZON_COLOR, DAWN_ZENITH_COLOR } from './constants/day.js';
 import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAIL } from './constants/aurora.js';
 import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
 import { createGestureInput } from './gestures/gestureInput.js';
+import { createEffects } from './effects/index.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
@@ -49,6 +51,17 @@ const uniforms = {
   // the trail's recorded path (one texel per point) and how many points are in use
   pointerTrailPoints: texture(createTrailTexture()),
   pointerTrailCount: uniform(1),
+  // shared mood of the sky and its reflection, animated by the rune effects (defaults = unchanged)
+  skyBrightness: uniform(1),
+  skyTint: uniform(new THREE.Color(1, 1, 1)),
+  auroraSpeed: uniform(1),
+  // midnight sun: 0 = night, 1 = full dawn sky (aurora and stars gone); also drives the lighting
+  dayAmount: uniform(0),
+  // set from the azimuth / elevation constants in js/objects/lighting.js
+  sunDirection: uniform(new THREE.Vector3(0, 0, -1)),
+  dawnHorizonColor: uniform(rawColorFromHex(DAWN_HORIZON_COLOR)),
+  dawnZenithColor: uniform(rawColorFromHex(DAWN_ZENITH_COLOR)),
+  sunGlowSize: uniform(SUN_GLOW_SIZE),
 };
 
 const init = () => {
@@ -69,7 +82,7 @@ const init = () => {
   const gui = DEBUG ? new GUI() : null;
 
   // the sky and water shaders ignore lights, only the lit materials (ship) use them
-  lighting = createLighting({ auroraColor: uniforms.auroraColor, exposure: uniforms.exposure, gui });
+  lighting = createLighting({ ...uniforms, gui });
   scene.add(...lighting.lights);
   scene.fog = lighting.fog;
 
@@ -108,8 +121,10 @@ const init = () => {
   // in debug mode Shift + drag looks around, so the aurora pointer ignores those drags
   auroraPointer = createAuroraPointer({ canvas: $canvas, camera, uniforms, shiftLooksAround: DEBUG, gui });
 
-  // $P recognition of the spacebar drawings (logging only for now); record mode in debug
-  createGestureInput({ canvas: $canvas, debug: DEBUG });
+  // $P recognition of the spacebar drawings; record mode in debug
+  createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
+  // recognised runes -> effects
+  createEffects({ uniforms, gui });
 
   window.addEventListener('resize', resize);
   resize();

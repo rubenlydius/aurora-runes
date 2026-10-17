@@ -27,6 +27,14 @@ fn waterShader(
   pointerTrail: f32,
   pointerTrailPoints: texture_2d<f32>,
   pointerTrailCount: f32,
+  skyBrightness: f32,
+  skyTint: vec3f,
+  auroraSpeed: f32,
+  dayAmount: f32,
+  sunDirection: vec3f,
+  dawnHorizonColor: vec3f,
+  dawnZenithColor: vec3f,
+  sunGlowSize: f32,
 ) -> vec4f {
   // view direction: from the camera through this point on the water
   let viewDir = normalize(worldPos - camPos);
@@ -56,6 +64,8 @@ fn waterShader(
     reflDir, fragCoord, iTime, iResolution,
     pointerPoint, pointerStrength, pointerRadius, pointerBoost, pointerPull, pointerCore, pointerCoreSize,
     pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
+    skyBrightness, skyTint, auroraSpeed,
+    dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize,
   ).rgb;
 
   // fake ship reflection: the dark hull blocks the sky, so darken the reflection in a soft patch under it
