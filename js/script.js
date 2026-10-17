@@ -1,7 +1,6 @@
 // "Auroras" by nimitz — https://www.shadertoy.com/view/XtGGRt
 import * as THREE from 'three/webgpu';
-import { uniform } from 'three/tsl';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { uniform, texture } from 'three/tsl';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
@@ -9,15 +8,17 @@ import { DEBUG } from './constants/debug.js';
 import { createSky, SKY_RADIUS } from './objects/sky.js';
 import { createWater } from './objects/water.js';
 import { createShip } from './objects/ship.js';
-import { createCamera, addCameraGui } from './objects/camera.js';
+import { createCamera, createLookAround } from './objects/camera.js';
 import { createLighting } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
 import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
+import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAIL } from './constants/aurora.js';
+import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
 
 const $canvas = document.getElementById('webgl');
-let renderer, camera, scene, controls, stats;
-let sky, water, ship, sail, shipUpdate, lighting;
+let renderer, camera, scene, stats;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -33,6 +34,20 @@ const uniforms = {
   shipRotation: uniform(0),
   shipReflectionSize: uniform(new THREE.Vector2(1, 1)),
   shipReflectionStrength: uniform(0),
+  // pointer glow in the aurora (sky and its reflection), driven by js/interaction/auroraPointer.js
+  pointerPoint: uniform(new THREE.Vector2()),
+  pointerStrength: uniform(0),
+  // radius and core size are set every frame, scaled for the pointer's distance
+  pointerRadius: uniform(1),
+  pointerBoost: uniform(POINTER_BOOST),
+  pointerPull: uniform(POINTER_PULL),
+  pointerCore: uniform(POINTER_CORE),
+  pointerCoreSize: uniform(0.1),
+  pointerCreate: uniform(POINTER_CREATE),
+  pointerTrail: uniform(POINTER_TRAIL),
+  // the trail's recorded path (one texel per point) and how many points are in use
+  pointerTrailPoints: texture(createTrailTexture()),
+  pointerTrailCount: uniform(1),
 };
 
 const init = () => {
@@ -76,11 +91,8 @@ const init = () => {
     .catch((error) => console.error('Could not load the Viking ship', error));
 
   if (DEBUG) {
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    // also sets the orbit target to the point the camera looks at
-    addCameraGui({ gui, camera, controls });
+    // Shift + drag turns the camera in place
+    createLookAround({ camera, canvas: $canvas, gui });
 
     const reflectionFolder = gui.addFolder('Ship reflection');
     reflectionFolder.add(shipReflection, 'strength', 0, 1, 0.01);
@@ -92,6 +104,9 @@ const init = () => {
     document.body.appendChild(stats.dom);
   }
 
+  // in debug mode Shift + drag looks around, so the aurora pointer ignores those drags
+  auroraPointer = createAuroraPointer({ canvas: $canvas, camera, uniforms, shiftLooksAround: DEBUG, gui });
+
   window.addEventListener('resize', resize);
   resize();
 
@@ -102,6 +117,7 @@ const draw = () => {
   timer.update();
   uniforms.iTime.value = timer.getElapsed();
   lighting.update(uniforms.iTime.value);
+  auroraPointer.update(timer.getDelta());
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
@@ -112,7 +128,6 @@ const draw = () => {
     uniforms.shipReflectionStrength.value = shipReflection.strength;
   }
 
-  if (controls) controls.update();
   // keep the camera at the center of the sky sphere
   sky.position.copy(camera.position);
 

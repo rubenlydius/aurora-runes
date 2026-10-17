@@ -16,6 +16,17 @@ fn waterShader(
   shipRotation: f32,
   shipReflectionSize: vec2f,
   shipReflectionStrength: f32,
+  pointerPoint: vec2f,
+  pointerStrength: f32,
+  pointerRadius: f32,
+  pointerBoost: f32,
+  pointerPull: f32,
+  pointerCore: f32,
+  pointerCoreSize: f32,
+  pointerCreate: f32,
+  pointerTrail: f32,
+  pointerTrailPoints: texture_2d<f32>,
+  pointerTrailCount: f32,
 ) -> vec4f {
   // view direction: from the camera through this point on the water
   let viewDir = normalize(worldPos - camPos);
@@ -40,7 +51,12 @@ fn waterShader(
   let reflDir = vec3f(bounced.x, max(bounced.y, 0.001), bounced.z);
 
   // the sky seen along the bounced ray, computed exactly like the sky sphere does
-  let sky = auroraShader(reflDir, fragCoord, iTime, iResolution).rgb;
+  // the pointer glow shows up in the reflection too
+  let sky = auroraShader(
+    reflDir, fragCoord, iTime, iResolution,
+    pointerPoint, pointerStrength, pointerRadius, pointerBoost, pointerPull, pointerCore, pointerCoreSize,
+    pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
+  ).rgb;
 
   // fake ship reflection: the dark hull blocks the sky, so darken the reflection in a soft patch under it
   let shipShadow = shipPatch(worldPos.xz, shipPosition.xz, shipRotation, shipReflectionSize);
