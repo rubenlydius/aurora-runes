@@ -159,3 +159,44 @@ export const HAGALAZ_COLOR = 0xdcebff;
 // a faint glow of their own (emissive), so the stones stay visible against the dark storm sky
 export const HAGALAZ_EMISSIVE = 0x9fc4e8;
 export const HAGALAZ_EMISSIVE_INTENSITY = 0.75;
+
+// Gebo (gift): a meteor shower across the upper sky, ending with one big, slow meteor
+// how many meteors, over how many seconds (sparse at first, denser toward the end)
+export const GEBO_COUNT = 30;
+export const GEBO_DURATION = 5;
+// where they start: azimuth (degrees, 0 = -z, 90 = +x, like the sun) and elevation ranges; the camera looks
+// toward about azimuth 40. The azimuth range is for a shower travelling to the right: for one travelling left
+// it's mirrored around the view's centre, so the meteors still cross the view
+export const GEBO_AZIMUTH_MIN = -15;
+export const GEBO_AZIMUTH_MAX = 70;
+export const GEBO_ELEVATION_MIN = 18;
+export const GEBO_ELEVATION_MAX = 42;
+// travel direction across the sky (degrees: 0 = toward the right, -90 = straight down, -180 = toward the left):
+// picked at random in this range on every trigger, the whole shower shares it (± the variation per meteor).
+// -150..-30: they come in from anywhere between 10 and 2 o'clock (-90 = from 12, straight down)
+export const GEBO_DIRECTION_MIN = -150;
+export const GEBO_DIRECTION_MAX = -30;
+export const GEBO_DIRECTION_VARIATION = 8;
+// speed (degrees of sky per second), streak length and width (degrees), lifetime range (seconds)
+export const GEBO_SPEED = 30;
+export const GEBO_LENGTH = 9;
+export const GEBO_WIDTH = 0.18;
+export const GEBO_LIFETIME_MIN = 0.4;
+export const GEBO_LIFETIME_MAX = 1;
+// head and tail colors (unlit, additive), and a brightness multiplier
+export const GEBO_HEAD_COLOR = 0xf2f8ff;
+export const GEBO_TAIL_COLOR = 0x7fc8ff;
+export const GEBO_BRIGHTNESS = 1.2;
+// finale: after this pause, one big meteor starting here, size and length multipliers, slower, longer,
+// brighter; plus a sky flash and key light lift (flashAmount) at its peak
+export const GEBO_PAUSE = 0.8;
+export const GEBO_FINALE_AZIMUTH = 25;
+export const GEBO_FINALE_ELEVATION = 38;
+export const GEBO_FINALE_SIZE = 3;
+export const GEBO_FINALE_LENGTH = 2;
+// the finale's trail just behind its head (the neck) is this many times thicker than a normal meteor's
+export const GEBO_FINALE_NECK = 1.4;
+export const GEBO_FINALE_SPEED = 0.5;
+export const GEBO_FINALE_LIFETIME = 2.5;
+export const GEBO_FINALE_BRIGHTNESS = 2;
+export const GEBO_FINALE_FLASH = 0.25;

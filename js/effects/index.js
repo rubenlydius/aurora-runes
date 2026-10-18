@@ -6,6 +6,7 @@ import { createThurisaz } from './thurisaz.js';
 import { createLaguz } from './laguz.js';
 import { createKenaz } from './kenaz.js';
 import { createHagalaz } from './hagalaz.js';
+import { createGebo } from './gebo.js';
 
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
@@ -22,6 +23,7 @@ export const createEffects = ({ uniforms, scene, camera, water, getSail, physics
     laguz: createLaguz({ uniforms, water, listener, gui }),
     kenaz: createKenaz({ uniforms, scene, camera, listener, getSail, gui }),
     hagalaz: createHagalaz({ uniforms, scene, camera, water, physics, listener, gui }),
+    gebo: createGebo({ uniforms, camera, scene, gui }),
   };
 
   window.addEventListener('gesture', (event) => {
