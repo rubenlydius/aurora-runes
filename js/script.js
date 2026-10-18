@@ -18,6 +18,7 @@ import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAI
 import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
 import { createGestureInput } from './gestures/gestureInput.js';
 import { createEffects } from './effects/index.js';
+import { createBackgroundMusic } from './audio/backgroundMusic.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
@@ -62,6 +63,8 @@ const uniforms = {
   dawnHorizonColor: uniform(rawColorFromHex(DAWN_HORIZON_COLOR)),
   dawnZenithColor: uniform(rawColorFromHex(DAWN_ZENITH_COLOR)),
   sunGlowSize: uniform(SUN_GLOW_SIZE),
+  // lightning: 0 = none, pulses during a Thurisaz strike (sky, water and key light follow it)
+  flashAmount: uniform(0),
 };
 
 const init = () => {
@@ -124,7 +127,9 @@ const init = () => {
   // $P recognition of the spacebar drawings; record mode in debug
   createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
   // recognised runes -> effects
-  createEffects({ uniforms, gui });
+  createEffects({ uniforms, scene, camera, getSail: () => sail, gui });
+  // starts on the first input, rotates through the tracks
+  createBackgroundMusic({ gui });
 
   window.addEventListener('resize', resize);
   resize();

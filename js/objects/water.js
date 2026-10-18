@@ -40,6 +40,7 @@ export const createWater = ({
   dawnHorizonColor,
   dawnZenithColor,
   sunGlowSize,
+  flashAmount,
 }) => {
   const geometry = new THREE.PlaneGeometry(WATER_SIZE, WATER_SIZE);
   // water main function first, the aurora code after it as helpers
@@ -89,6 +90,7 @@ export const createWater = ({
       dawnHorizonColor,
       dawnZenithColor,
       sunGlowSize,
+      flashAmount,
     }),
     THREE.SRGBColorSpace,
   );

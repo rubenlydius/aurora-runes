@@ -5,6 +5,7 @@ import {
   KEY_LIGHT_INTENSITY,
   KEY_LIGHT_PULSE_AMOUNT,
   KEY_LIGHT_PULSE_SPEED,
+  KEY_LIGHT_FLASH_INTENSITY,
   HEMI_SKY_COLOR,
   HEMI_GROUND_COLOR,
   HEMI_INTENSITY,
@@ -38,11 +39,12 @@ export const rawColorFromHex = (hex) => new THREE.Color().setHex(hex, THREE.Line
 
 // night lighting: aurora key light, dim fill light and fog (no shadows),
 // plus the midnight sun: a warm sun light, fill and fog that follow dayAmount
-export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, gui }) => {
+export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, flashAmount, gui }) => {
   const params = {
     keyIntensity: KEY_LIGHT_INTENSITY,
     pulseAmount: KEY_LIGHT_PULSE_AMOUNT,
     pulseSpeed: KEY_LIGHT_PULSE_SPEED,
+    keyFlash: KEY_LIGHT_FLASH_INTENSITY,
     hemiIntensity: HEMI_INTENSITY,
     sunAzimuth: SUN_AZIMUTH,
     sunElevation: SUN_ELEVATION,
@@ -73,7 +75,9 @@ export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection,
   const fog = new THREE.FogExp2(FOG_COLOR, FOG_DENSITY);
 
   const update = (time) => {
-    keyLight.intensity = params.keyIntensity * (1 + params.pulseAmount * Math.sin(time * params.pulseSpeed));
+    keyLight.intensity = params.keyIntensity * (1 + params.pulseAmount * Math.sin(time * params.pulseSpeed))
+      // lightning flash, flashAmount is animated by the Thurisaz timeline
+      + params.keyFlash * flashAmount.value;
 
     const day = dayAmount.value;
     sunLight.position.copy(sunDirection.value).multiplyScalar(SUN_LIGHT_DISTANCE);
@@ -102,6 +106,7 @@ export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection,
     folder.add(params, 'keyIntensity', 0, 10, 0.05).name('key intensity');
     folder.add(params, 'pulseAmount', 0, 1, 0.01).name('pulse amount');
     folder.add(params, 'pulseSpeed', 0, 3, 0.01).name('pulse speed');
+    folder.add(params, 'keyFlash', 0, 30, 0.1).name('key flash intensity');
     folder.add(keyLight.position, 'x', -100, 100, 1).name('key position x');
     folder.add(keyLight.position, 'y', 0, 100, 1).name('key position y');
     folder.add(keyLight.position, 'z', -150, 50, 1).name('key position z');

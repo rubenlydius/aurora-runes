@@ -12,6 +12,8 @@ export const KEY_LIGHT_INTENSITY = 2.5;
 export const KEY_LIGHT_PULSE_AMOUNT = 0.1;
 // ...at this speed (radians per second, 0.5 is one swing about every 12.5 s)
 export const KEY_LIGHT_PULSE_SPEED = 0.5;
+// extra key light intensity at flashAmount 1 (lightning, see js/effects/thurisaz.js)
+export const KEY_LIGHT_FLASH_INTENSITY = 8;
 
 // fill light: deep blue-teal from above, almost nothing from below
 export const HEMI_SKY_COLOR = 0x2a4a5c;

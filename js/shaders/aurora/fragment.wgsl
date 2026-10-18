@@ -13,6 +13,7 @@
 // day (midnight sun): dayAmount 0..1 blends the night background toward a dawn gradient (dawnHorizonColor
 // -> dawnZenithColor, sRGB) and fades the aurora and stars out; a warm glow of size sunGlowSize (radians)
 // sits around sunDirection. dayAmount 0 leaves the night exactly as it was
+// flashAmount (lightning, 0 = none): lifts the whole sky toward a cold white for the length of a flash
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
@@ -37,6 +38,7 @@ fn auroraShader(
   dawnHorizonColor: vec3f,
   dawnZenithColor: vec3f,
   sunGlowSize: f32,
+  flashAmount: f32,
 ) -> vec4f {
   let auroraTime = iTime * auroraSpeed;
   let ro = vec3f(0.0, 0.0, -6.7);
@@ -85,6 +87,9 @@ fn auroraShader(
 
   // the sun, on top of the dawn gradient (rd is mirrored below the horizon, so it reflects too)
   col += sunGlow(rd, sunDirection, sunGlowSize, dawnHorizonColor) * day;
+
+  // lightning lights up the sky (and, through the water shader, its reflection)
+  col += vec3f(0.55, 0.6, 0.75) * 0.35 * flashAmount;
 
   // mood, before the soft clip so a brighter sky still rolls off smoothly
   col *= skyTint * skyBrightness;
