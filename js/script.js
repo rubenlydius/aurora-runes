@@ -8,6 +8,7 @@ import { DEBUG } from './constants/debug.js';
 import { createSky, SKY_RADIUS } from './objects/sky.js';
 import { createWater } from './objects/water.js';
 import { createShip } from './objects/ship.js';
+import { createMountains } from './objects/mountains.js';
 import { createCamera, createLookAround } from './objects/camera.js';
 import { createLighting, rawColorFromHex } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
@@ -106,6 +107,14 @@ const init = () => {
       scene.add(ship);
     })
     .catch((error) => console.error('Could not load the Viking ship', error));
+
+  // same as the ship: loads asynchronously, lit and tone mapped like it
+  createMountains({ gui })
+    .then((mountains) => {
+      applyToneMapping(mountains, { renderer, exposure: uniforms.exposure });
+      scene.add(mountains);
+    })
+    .catch((error) => console.error('Could not load the mountains', error));
 
   if (DEBUG) {
     // Shift + drag turns the camera in place
