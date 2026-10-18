@@ -257,3 +257,47 @@ export const DAGAZ_RAMP_OUT = 4;
 // peak), and how far its hue turns with the aurora's (fraction of the color wheel per unit of hue shift)
 export const DAGAZ_LIGHT_FOLLOW = 0.5;
 export const DAGAZ_LIGHT_HUE = 0.25;
+
+// Tiwaz (Tyr's spear): a spear of light is thrown from near the ship in a high arc and comes down far behind
+// the mountain ridge; the aurora flares red while it flies, a warm glow flashes up behind the ridge on impact
+// arc (world units): start near the ship, landing behind the ridge as seen from the camera (mountain 1 is at
+// x 223, z -135), and the height of the arc's top above the water
+export const TIWAZ_START = { x: 3, y: 0, z: -14 };
+export const TIWAZ_LANDING = { x: 340, y: -2, z: -123 };
+export const TIWAZ_PEAK_HEIGHT = 90;
+// seconds in the air
+export const TIWAZ_FLIGHT = 2.5;
+// spear whoosh (about 2.1 s, loudest about 1.0 s in): seconds after the throw it starts. 0.25 puts its loudest
+// moment on the top of the arc (half the flight); negative starts it right away, that far into the file
+export const TIWAZ_SOUND = 'sounds/spear.wav';
+export const TIWAZ_VOLUME = 0.8;
+export const TIWAZ_SOUND_DELAY = -0.3;
+// impact sound (about 4 s, its hit is loudest 0.3 s in): seconds relative to the impact it starts, -0.3 puts
+// the hit right on the landing
+export const TIWAZ_IMPACT_SOUND = 'sounds/spear_end.wav';
+export const TIWAZ_IMPACT_VOLUME = 0.8;
+export const TIWAZ_IMPACT_SOUND_DELAY = -0.3;
+// spear streak: width (degrees, like the Gebo meteors but larger), tail length (fraction of the arc), neck,
+// brightness, head and tail colors
+export const TIWAZ_WIDTH = 0.7;
+export const TIWAZ_TAIL = 0.1;
+export const TIWAZ_NECK = 1.4;
+export const TIWAZ_BRIGHTNESS = 2.5;
+export const TIWAZ_HEAD_COLOR = 0xf42710;
+export const TIWAZ_TAIL_COLOR = 0xff8a3d;
+// red aurora: auroraHueShift at full red (2 = every layer deep red, see the aurora shader), a subtle red sky
+// tint (sRGB values as-is), and how far the key light's hue turns (fraction of the color wheel: its teal
+// green + 0.56 = red); rises over TIWAZ_RED_IN, eases back over TIWAZ_RED_OUT after the impact
+export const TIWAZ_HUE_SHIFT = 2;
+export const TIWAZ_SKY_TINT = 0xffdcdc;
+export const TIWAZ_LIGHT_HUE = 0.56;
+export const TIWAZ_RED_IN = 0.8;
+export const TIWAZ_RED_OUT = 3;
+// impact glow behind the ridge: sky flash (flashAmount) and a warm point light at the landing point, raised a
+// little (physical units, decay 2, so it has to be strong at that distance); rise and fade (seconds)
+export const TIWAZ_GLOW_FLASH = 0.6;
+export const TIWAZ_GLOW_COLOR = 0xff9a50;
+export const TIWAZ_GLOW_INTENSITY = 1000000;
+export const TIWAZ_GLOW_HEIGHT = 20;
+export const TIWAZ_GLOW_IN = 0.15;
+export const TIWAZ_GLOW_OUT = 1.5;

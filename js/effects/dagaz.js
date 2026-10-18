@@ -101,7 +101,7 @@ export const createDagaz = ({ uniforms, lighting, gui }) => {
     folder.add({ trigger }, 'trigger').name('trigger');
     // live values (listen: they follow the surge), and peak settings
     folder.add(uniforms.auroraIntensity, 'value', 0, 6, 0.01).name('aurora intensity').listen();
-    folder.add(uniforms.auroraHueShift, 'value', 0, 1.5, 0.01).name('aurora hue shift').listen();
+    folder.add(uniforms.auroraHueShift, 'value', 0, 2, 0.01).name('aurora hue shift').listen();
     folder.add(params, 'intensity', 1, 6, 0.05).name('peak intensity');
     folder.add(params, 'hueShift', 0, 1.5, 0.01).name('peak hue shift');
     folder.add(params, 'speed', 0, 10, 0.1).name('peak speed');

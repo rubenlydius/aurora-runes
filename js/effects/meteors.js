@@ -79,6 +79,9 @@ export const createMeteors = ({ max }) => {
     width: 0,
     neck: 1,
     brightness: 1,
+    fadeStart: 0.55,
+    path: null,
+    headAt: null,
     headColor: new THREE.Color(),
     tailColor: new THREE.Color(),
   }));
@@ -86,6 +89,10 @@ export const createMeteors = ({ max }) => {
 
   // { start, travel, speed, length, width (radians), neck, life (s), brightness, headColor, tailColor };
   // neck: width multiplier for the trail just behind the head (1 = normal)
+  // optional, for a streak on any path instead of across the sky (Tiwaz's spear):
+  //   path(s, target)  writes the world point at path position s into target (start, travel, speed unused)
+  //   headAt()         the head's current path position, e.g. a value GSAP animates (instead of speed · age)
+  //   fadeStart        fraction of the life after which it fades out (default 0.55)
   // takes a free slot, or the oldest meteor when all are in use
   const launch = (options) => {
     let meteor = meteors.find((m) => !m.active);
@@ -93,24 +100,32 @@ export const createMeteors = ({ max }) => {
     else flying += 1;
     meteor.active = true;
     meteor.age = 0;
-    meteor.start.copy(options.start);
-    meteor.travel.copy(options.travel);
-    meteor.speed = options.speed;
+    // (a meteor on its own path has no start, travel or speed)
+    if (options.start) meteor.start.copy(options.start);
+    if (options.travel) meteor.travel.copy(options.travel);
+    meteor.speed = options.speed ?? 0;
     meteor.length = options.length;
     meteor.width = options.width;
     meteor.neck = options.neck ?? 1;
     meteor.life = options.life;
     meteor.brightness = options.brightness;
+    meteor.fadeStart = options.fadeStart ?? 0.55;
+    meteor.path = options.path ?? null;
+    meteor.headAt = options.headAt ?? null;
     meteor.headColor.set(options.headColor);
     meteor.tailColor.set(options.tailColor);
   };
 
-  // point on the meteor's great circle, `angle` radians from its start, in world space around the camera
-  const pointAt = (meteor, angle, target, cameraPosition) => target
-    .copy(meteor.start).multiplyScalar(Math.cos(angle))
-    .addScaledVector(meteor.travel, Math.sin(angle))
-    .multiplyScalar(RADIUS)
-    .add(cameraPosition);
+  // point on the meteor's great circle, `angle` radians from its start, in world space around the camera;
+  // or, for a meteor with its own path, that path's point
+  const pointAt = (meteor, angle, target, cameraPosition) => {
+    if (meteor.path) return meteor.path(angle, target);
+    return target
+      .copy(meteor.start).multiplyScalar(Math.cos(angle))
+      .addScaledVector(meteor.travel, Math.sin(angle))
+      .multiplyScalar(RADIUS)
+      .add(cameraPosition);
+  };
 
   // one cross-section: two vertices (from vertex `index` on), `width` world units apart, sideways to the
   // streak and the view
@@ -161,7 +176,7 @@ export const createMeteors = ({ max }) => {
       }
       // the head moves along the circle; the tail starts at the start point and trails at most `length`
       // behind, so the streak grows out of its start, then travels
-      const headAngle = meteor.speed * meteor.age;
+      const headAngle = meteor.headAt ? meteor.headAt() : meteor.speed * meteor.age;
       const tailAngle = Math.max(headAngle - meteor.length, 0);
       pointAt(meteor, headAngle, head, cameraPosition);
       pointAt(meteor, tailAngle, tail, cameraPosition);
@@ -169,16 +184,20 @@ export const createMeteors = ({ max }) => {
       tangent.subVectors(head, tail).normalize();
 
       // brightness over its life: quick flare up, then fade out over the second half
-      const fade = smoothstep(t, 0, 0.12) * (1 - smoothstep(t, 0.55, 1)) * meteor.brightness;
-      const width = meteor.width * RADIUS;
+      const fade = smoothstep(t, 0, 0.12) * (1 - smoothstep(t, meteor.fadeStart, 1)) * meteor.brightness;
+      // widths are angles: world width = angle · distance from the camera, so a streak looks equally thick
+      // near and far (on the sky sphere that distance is always RADIUS)
+      const width = meteor.width * head.distanceTo(cameraPosition);
+      const middleWidth = meteor.width * middle.distanceTo(cameraPosition);
+      const tailWidth = meteor.width * tail.distanceTo(cameraPosition);
       // head: half width (its square corners sit inside the round cap's glow) and full color;
       // middle: between head and tail color, dimmer; tail: black. Then the cap over the head
       color.copy(meteor.headColor).multiplyScalar(fade);
       writeSection(first, head, width * 0.5, color.r, color.g, color.b, cameraPosition);
       writeCap(first + STRIP_VERTICES, head, width * CAP_RADIUS, color.r, color.g, color.b, cameraPosition);
       color.lerpColors(meteor.headColor, meteor.tailColor, 0.5).multiplyScalar(fade * 0.35);
-      writeSection(first + 2, middle, width * 0.45 * meteor.neck, color.r, color.g, color.b, cameraPosition);
-      writeSection(first + 4, tail, width * 0.1, 0, 0, 0, cameraPosition);
+      writeSection(first + 2, middle, middleWidth * 0.45 * meteor.neck, color.r, color.g, color.b, cameraPosition);
+      writeSection(first + 4, tail, tailWidth * 0.1, 0, 0, 0, cameraPosition);
     });
     positions.needsUpdate = true;
     colors.needsUpdate = true;

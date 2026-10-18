@@ -17,8 +17,9 @@
 // flashAmount (lightning, 0 = none): lifts the whole sky toward a cold white for the length of a flash
 // surge (Dagaz), only on the aurora itself, not the background sky or stars:
 //   auroraIntensity  multiplies the aurora's brightness (1 = as it was)
-//   auroraHueShift   0 = the original green; rising, the lower edge turns pink and the tops violet (through
-//                    cyan and blue), the middle stays green (see hueRotate in aurora()). 0 = exactly as it was
+//   auroraHueShift   0 = the original green; up to 1, the lower edge turns pink and the tops violet (through
+//                    cyan and blue), the middle stays green (Dagaz). From 1 to 2 every layer, the middle too,
+//                    turns on to deep red (Tiwaz, rare red aurora). See hueRotate in aurora(). 0 = exactly as it was
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
@@ -259,7 +260,12 @@ fn aurora(
     // hueShift 0: angle 0, the color is untouched
     let lowerEdge = 1.0 - smoothstep(0.0, 12.0, i);
     let upperPart = smoothstep(22.0, 42.0, i);
-    let hueAngle = hueShift * (3.1 * lowerEdge + 2.3 * upperPart);
+    // this layer's angle at hueShift 1
+    let surgeAngle = 3.1 * lowerEdge + 2.3 * upperPart;
+    // beyond 1: every layer continues from that angle to 3.65 radians (about 209°), where the aurora's
+    // teal green (hue about 146°) becomes deep red (about 355°). Both lines agree at 1
+    let redAngle = mix(surgeAngle, 3.65, clamp(hueShift - 1.0, 0.0, 1.0));
+    let hueAngle = select(hueShift * surgeAngle, redAngle, hueShift > 1.0);
     layerColor = hueRotate(layerColor, hueAngle);
     let col2 = vec4f(layerColor * rzt, rzt);
     avgCol = mix(avgCol, col2, 0.5);
