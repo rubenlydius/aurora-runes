@@ -6,6 +6,8 @@ import spreadShader from '../shaders/spread/fragment.wgsl?raw';
 import { rawColorFromHex } from '../objects/lighting.js';
 import { WATER_LEVEL } from '../constants/water.js';
 import {
+  ISA_SOUND,
+  ISA_VOLUME,
   ISA_FREEZE_DURATION,
   ISA_HOLD,
   ISA_THAW_DURATION,
@@ -34,21 +36,14 @@ import {
 const lerp = THREE.MathUtils.lerp;
 const white = new THREE.Color(1, 1, 1);
 
-// --- sound hooks: Isa has no audio yet. Add sounds here later, the timeline already calls these ---
-const hooks = {
-  // the freeze starts (water front, frost and aurora slowing begin)
-  onFreezeStart: () => {},
-  // the thaw starts (fronts go back, aurora speeds up again)
-  onThawStart: () => {},
-};
-
 // Isa (ice): "the fjord freezes". Ice spreads over the water from the shore (water shader, freezeAmount),
 // frost climbs the ship from its waterline (spread shader, planar), the ship stops moving, the aurora freezes
 // in place (auroraFreeze: the render loop multiplies auroraSpeed by 1 - auroraFreeze, on accumulated time
 // so it holds still instead of jumping; a factor of its own, so Laguz changing auroraSpeed can't undo it), the
 // light turns colder. Then the ice and frost fade away together (no fronts going back). One GSAP timeline
-export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
+export const createIsa = ({ uniforms, water, lighting, getShip, listener, gui }) => {
   const params = {
+    volume: ISA_VOLUME,
     freezeDuration: ISA_FREEZE_DURATION,
     hold: ISA_HOLD,
     thawDuration: ISA_THAW_DURATION,
@@ -57,6 +52,28 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
     frostAmount: ISA_FROST_AMOUNT,
     frostEdgeIntensity: ISA_FROST_EDGE_INTENSITY,
     hemiBoost: ISA_HEMI_BOOST,
+  };
+
+  // --- sound ---
+  const sound = new THREE.Audio(listener);
+  new THREE.AudioLoader().load(
+    `${import.meta.env.BASE_URL}${ISA_SOUND}`,
+    (buffer) => sound.setBuffer(buffer),
+    undefined,
+    (error) => console.error('Isa: could not load the ice sound', error),
+  );
+
+  // --- sound hooks, the timeline calls these ---
+  const hooks = {
+    // the freeze starts (water front, frost and aurora slowing begin): the ice cracking sound
+    onFreezeStart: () => {
+      if (!sound.buffer) return;
+      if (sound.isPlaying) sound.stop();
+      sound.setVolume(params.volume);
+      sound.play();
+    },
+    // the thaw starts (ice and frost fade away, aurora speeds up again): no sound yet
+    onThawStart: () => {},
   };
 
   // --- water ice: set the water shader's ice uniforms from the constants ---
@@ -180,6 +197,7 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
 
   let timeline = null;
   const trigger = () => {
+    if (listener.context.state === 'suspended') listener.context.resume();
     // retriggered: continue from the current state, only the remaining part of each ramp
     timeline?.kill();
     const freeze = ice.freezeAmount.value;
@@ -257,6 +275,7 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
     folder.add(frost.noiseScale, 'value', 0.5, 30, 0.1).name('frost noise scale');
     folder.addColor(colors, 'keyTint').name('key light tint').onChange((value) => coolTint.set(value));
     folder.add(params, 'hemiBoost', 0.5, 4, 0.05).name('fill light boost (×)');
+    folder.add(params, 'volume', 0, 2, 0.01);
   }
 
   return { trigger, shipFreeze, auroraFreeze };

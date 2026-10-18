@@ -203,6 +203,9 @@ export const GEBO_FINALE_FLASH = 0.25;
 
 // Isa (ice): the fjord freezes from the shore outward, frost climbs the ship from the waterline, the ship and
 // the aurora stop moving; then it all thaws
+// sound when the freeze starts (about 2.7 s, matches the freeze)
+export const ISA_SOUND = 'sounds/ice.mp3';
+export const ISA_VOLUME = 0.8;
 // timing (seconds): freeze (water front, aurora slowing), hold, thaw (ice and frost fade away, aurora speeds up)
 export const ISA_FREEZE_DURATION = 3;
 export const ISA_HOLD = 2;

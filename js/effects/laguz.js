@@ -55,7 +55,10 @@ export const createLaguz = ({ uniforms, water, listener, gui }) => {
     water.ripple.strength.value = lerp(calm.rippleStrength, calm.rippleStrength * params.rippleStrength, s);
     water.ripple.speed.value = lerp(calm.rippleSpeed, calm.rippleSpeed * params.rippleSpeed, s);
     uniforms.auroraSpeed.value = lerp(calm.auroraSpeed, calm.auroraSpeed * params.auroraSpeed, s);
-    sound.setVolume(params.volume * s);
+    // Isa's ice holding the water (waves.freeze > 0, from the moment the freeze starts until the thaw ends)
+    // silences the waves: the ice sound takes over. setVolume eases over ~10 ms, so the cut doesn't click
+    const frozen = water.waves.freeze.value > 0;
+    sound.setVolume(frozen ? 0 : params.volume * s);
   };
 
   let timeline = null;

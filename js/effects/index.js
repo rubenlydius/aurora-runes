@@ -28,7 +28,7 @@ export const createEffects = ({ uniforms, scene, camera, water, lighting, getShi
     gebo: createGebo({ uniforms, camera, scene, gui }),
   };
   // Isa also hands back the ship's freeze state
-  const isa = createIsa({ uniforms, water, lighting, getShip, gui });
+  const isa = createIsa({ uniforms, water, lighting, getShip, listener, gui });
   effects.isa = isa.trigger;
 
   window.addEventListener('gesture', (event) => {
