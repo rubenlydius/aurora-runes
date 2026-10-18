@@ -239,3 +239,21 @@ export const ISA_FROST_NOISE_SCALE = 8;
 // reflects more light)
 export const ISA_KEY_TINT = 0xc8dcff;
 export const ISA_HEMI_BOOST = 1.5;
+
+// Dagaz (dawn / awakening): an aurora surge, like a substorm. The aurora brightens, speeds up and shifts
+// toward pink and violet, dances in a few pulses, then settles
+// peak values: aurora brightness (×), hue shift (0 = green, 1 = pink lower edge / violet tops), speed
+export const DAGAZ_INTENSITY = 5;
+export const DAGAZ_HUE_SHIFT = 1;
+export const DAGAZ_SPEED = 4;
+// pulses at the peak: how many, how strong (extra brightness, as a fraction of the peak)
+export const DAGAZ_PULSE_COUNT = 5;
+export const DAGAZ_PULSE_STRENGTH = 0.5;
+// timing (seconds): build up, hold at the peak (the pulses happen here), ease back
+export const DAGAZ_RAMP_IN = 2;
+export const DAGAZ_HOLD = 4;
+export const DAGAZ_RAMP_OUT = 4;
+// key light during the surge: how much of the aurora's extra brightness it follows (1 = all of it, 3× at the
+// peak), and how far its hue turns with the aurora's (fraction of the color wheel per unit of hue shift)
+export const DAGAZ_LIGHT_FOLLOW = 0.5;
+export const DAGAZ_LIGHT_HUE = 0.25;

@@ -59,6 +59,8 @@ export const createWater = ({
   dawnZenithColor,
   sunGlowSize,
   flashAmount,
+  auroraIntensity,
+  auroraHueShift,
   gui,
 }) => {
   // a grid packed toward the center: u in -1..1 maps to sign(u) * u² * half size, so the cells are small near
@@ -155,6 +157,8 @@ export const createWater = ({
       dawnZenithColor,
       sunGlowSize,
       flashAmount,
+      auroraIntensity,
+      auroraHueShift,
       ...swellUniforms,
       ...iceUniforms,
     }),

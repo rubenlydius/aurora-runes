@@ -52,6 +52,8 @@ fn waterShader(
   dawnZenithColor: vec3f,
   sunGlowSize: f32,
   flashAmount: f32,
+  auroraIntensity: f32,
+  auroraHueShift: f32,
   waveHeight: f32,
   waveDirection: f32,
   waveLength: f32,
@@ -146,7 +148,7 @@ fn waterShader(
     pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
     skyBrightness, skyTint, auroraTime,
     dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize,
-    flashAmount,
+    flashAmount, auroraIntensity, auroraHueShift,
   ).rgb;
 
   // fake ship reflection: the dark hull blocks the sky, so darken the reflection in a soft patch under it

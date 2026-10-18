@@ -15,6 +15,10 @@
 // -> dawnZenithColor, sRGB) and fades the aurora and stars out; a warm glow of size sunGlowSize (radians)
 // sits around sunDirection. dayAmount 0 leaves the night exactly as it was
 // flashAmount (lightning, 0 = none): lifts the whole sky toward a cold white for the length of a flash
+// surge (Dagaz), only on the aurora itself, not the background sky or stars:
+//   auroraIntensity  multiplies the aurora's brightness (1 = as it was)
+//   auroraHueShift   0 = the original green; rising, the lower edge turns pink and the tops violet (through
+//                    cyan and blue), the middle stays green (see hueRotate in aurora()). 0 = exactly as it was
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
@@ -40,6 +44,8 @@ fn auroraShader(
   dawnZenithColor: vec3f,
   sunGlowSize: f32,
   flashAmount: f32,
+  auroraIntensity: f32,
+  auroraHueShift: f32,
 ) -> vec4f {
   let ro = vec3f(0.0, 0.0, -6.7);
   let viewDir = normalize(rayDir);
@@ -61,9 +67,11 @@ fn auroraShader(
     let result = aurora(
       ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
-      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
+      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift,
     );
-    let aur = smoothstep(vec4f(0.0), vec4f(1.5), result.col) * fade * night;
+    var aur = smoothstep(vec4f(0.0), vec4f(1.5), result.col) * fade * night;
+    // surge: brighter aurora (only its color: how much it covers the sky behind it, aur.a, stays the same)
+    aur = vec4f(aur.rgb * auroraIntensity, aur.a);
     col = mix(col, dawnSky(rd, dawnHorizonColor, dawnZenithColor), day);
     col += stars(viewDir, iResolution) * night;
     // boost after the smoothstep above, which would otherwise cap the extra brightness at 1
@@ -75,9 +83,11 @@ fn auroraShader(
     let result = aurora(
       ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
-      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
+      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift,
     );
-    let aur = smoothstep(vec4f(0.0), vec4f(2.5), result.col) * night;
+    var aur = smoothstep(vec4f(0.0), vec4f(2.5), result.col) * night;
+    // surge: the reflected aurora brightens the same way
+    aur = vec4f(aur.rgb * auroraIntensity, aur.a);
     col += stars(rd, iResolution) * 0.1 * night;
     col = col * (1.0 - aur.a) + aur.rgb * (1.0 + pointerBoost * result.glow);
     let pos = ro + ((0.5 - ro.y) / rd.y) * rd;
@@ -95,6 +105,17 @@ fn auroraShader(
   col *= skyTint * skyBrightness;
 
   return vec4f(softClip(col), 1.0);
+}
+
+// turn a color's hue by `angle` radians while keeping its brightness: rotate it around the grey axis
+// (1, 1, 1) of the RGB cube (Rodrigues' rotation formula). Positive angles go green -> cyan -> blue -> violet
+// -> pink. max() drops the small negative values the rotation can give for very saturated colors
+fn hueRotate(color: vec3f, angle: f32) -> vec3f {
+  let k = vec3f(0.57735);
+  let c = cos(angle);
+  let s = sin(angle);
+  let rotated = color * c + cross(k, color) * s + k * dot(k, color) * (1.0 - c);
+  return max(rotated, vec3f(0.0));
 }
 
 // dawn sky: horizon color low down, easing into the zenith color higher up
@@ -183,6 +204,7 @@ fn aurora(
   pointerTrail: f32,
   pointerTrailPoints: texture_2d<f32>,
   pointerTrailCount: f32,
+  hueShift: f32,
 ) -> AuroraResult {
   var col = vec4f(0.0);
   var avgCol = vec4f(0.0);
@@ -230,7 +252,16 @@ fn aurora(
     // closeness for the brightness boost, squared so it concentrates toward the center
     let falloff = 1.0 - smoothstep(0.0, pointerRadius, r);
     let near = pointerStrength * falloff * falloff;
-    let col2 = vec4f((sin(1.0 - vec3f(2.15, -0.5, 1.2) + i * 0.043) * 0.5 + 0.5) * rzt, rzt);
+    // this layer's color (i: 0 = the lowest layer, 49 = the highest)
+    var layerColor = sin(1.0 - vec3f(2.15, -0.5, 1.2) + i * 0.043) * 0.5 + 0.5;
+    // surge hue shift, like a strong real aurora: the lowest layers turn up to about 180° around the color
+    // wheel (green -> pink fringe), the highest about 130° (green -> violet tops), the middle stays green.
+    // hueShift 0: angle 0, the color is untouched
+    let lowerEdge = 1.0 - smoothstep(0.0, 12.0, i);
+    let upperPart = smoothstep(22.0, 42.0, i);
+    let hueAngle = hueShift * (3.1 * lowerEdge + 2.3 * upperPart);
+    layerColor = hueRotate(layerColor, hueAngle);
+    let col2 = vec4f(layerColor * rzt, rzt);
     avgCol = mix(avgCol, col2, 0.5);
     let weight = exp2(-i * 0.065 - 2.5) * smoothstep(0.0, 5.0, i);
     col += avgCol * weight;

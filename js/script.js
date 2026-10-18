@@ -69,6 +69,9 @@ const uniforms = {
   sunGlowSize: uniform(SUN_GLOW_SIZE),
   // lightning: 0 = none, pulses during a Thurisaz strike (sky, water and key light follow it)
   flashAmount: uniform(0),
+  // aurora surge (Dagaz): brightness multiplier and hue shift of the aurora only (defaults = unchanged)
+  auroraIntensity: uniform(1),
+  auroraHueShift: uniform(0),
 };
 
 // async: Rapier's WebAssembly has to start before the scene does

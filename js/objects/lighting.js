@@ -74,18 +74,22 @@ export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount
 
   const fog = new THREE.FogExp2(FOG_COLOR, FOG_DENSITY);
 
-  // set by rune effects (Isa): a tint multiplied onto the key light's aurora color (white = unchanged), and a
-  // multiplier on the fill light's intensity (1 = unchanged). The key light gets its own Color for this, so
-  // tinting it doesn't recolor the aurora uniform it used to share
-  const adjust = { keyTint: new THREE.Color(1, 1, 1), hemiScale: 1 };
+  // set by rune effects: a tint multiplied onto the key light's aurora color (white = unchanged, Isa), a hue
+  // offset on that color (fraction of the color wheel, 0 = unchanged, Dagaz), a multiplier on the key light's
+  // intensity (1 = unchanged, Dagaz) and on the fill light's (1 = unchanged, Isa). The key light gets its own
+  // Color for this, so tinting it doesn't recolor the aurora uniform it used to share
+  const adjust = { keyTint: new THREE.Color(1, 1, 1), keyHue: 0, keyScale: 1, hemiScale: 1 };
   keyLight.color = new THREE.Color();
 
   const update = (time) => {
     keyLight.color.copy(auroraColor.value).multiply(adjust.keyTint);
+    // skipped at 0: the HSL round trip would change the color by a tiny rounding error
+    if (adjust.keyHue !== 0) keyLight.color.offsetHSL(adjust.keyHue, 0, 0);
     // the key light is the aurora's light, so it dims with the sky (skyBrightness, 1 = normal; Hagalaz darkens it)
     keyLight.intensity = params.keyIntensity * skyBrightness.value * (1 + params.pulseAmount * Math.sin(time * params.pulseSpeed))
       // lightning flash, flashAmount is animated by the Thurisaz timeline
       + params.keyFlash * flashAmount.value;
+    keyLight.intensity *= adjust.keyScale;
 
     const day = dayAmount.value;
     sunLight.position.copy(sunDirection.value).multiplyScalar(SUN_LIGHT_DISTANCE);
