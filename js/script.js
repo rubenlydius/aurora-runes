@@ -24,7 +24,7 @@ import { createPhysics } from './physics/world.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
-let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -148,7 +148,7 @@ const init = async () => {
   // $P recognition of the spacebar drawings; record mode in debug
   createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
   // recognised runes -> effects
-  createEffects({ uniforms, scene, camera, water, getSail: () => sail, physics, gui });
+  effects = createEffects({ uniforms, scene, camera, water, lighting, getShip: () => ship, getSail: () => sail, physics, gui });
   // starts on the first input, rotates through the tracks
   createBackgroundMusic({ gui });
 
@@ -174,6 +174,8 @@ const draw = () => {
       uniforms.iTime.value,
       (x, z) => water.waveHeightAt(x, z, uniforms.iTime.value, camera.position),
       water.waves.height.value,
+      // Isa: held still by the ice
+      effects.shipFreeze.value,
     );
     uniforms.shipPosition.value.copy(ship.position);
     uniforms.shipRotation.value = ship.rotation.y;

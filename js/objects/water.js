@@ -92,6 +92,20 @@ export const createWater = ({
   const waveSharpness = uniform(WAVE_SHARPNESS);
   const waveFadeDistance = uniform(WAVE_FADE_DISTANCE);
   const swellUniforms = { waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance };
+  // ice (Isa): freezeAmount 0 leaves the water unchanged; js/effects/isa.js sets the rest from its constants
+  const iceUniforms = {
+    freezeAmount: uniform(0),
+    iceOrigin: uniform(new THREE.Vector2()),
+    iceRadius: uniform(1),
+    iceCurve: uniform(1),
+    iceNoise: uniform(0),
+    iceFade: uniform(1),
+    iceColor: uniform(new THREE.Color(1, 1, 1)),
+    iceTint: uniform(0),
+    iceBlur: uniform(0),
+    crackStrength: uniform(0),
+    crackScale: uniform(1),
+  };
 
   const material = new THREE.MeshBasicNodeMaterial();
   material.positionNode = waterVertex({ localPos: positionLocal, camPos: cameraPosition, iTime, ...swellUniforms });
@@ -133,6 +147,7 @@ export const createWater = ({
       sunGlowSize,
       flashAmount,
       ...swellUniforms,
+      ...iceUniforms,
     }),
     THREE.SRGBColorSpace,
   );
@@ -172,11 +187,12 @@ export const createWater = ({
     folder.add(waveFadeDistance, 'value', 10, 300, 1).name('fade distance');
   }
 
-  // ripple and waves: the uniforms rune effects animate (Laguz); waveHeightAt: the ship floats on it
+  // ripple, waves and ice: the uniforms rune effects animate (Laguz, Isa); waveHeightAt: the ship floats on it
   return {
     mesh,
     ripple: { strength: rippleStrength, speed: rippleSpeed },
     waves: { height: waveHeight },
+    ice: iceUniforms,
     waveHeightAt,
     update,
   };

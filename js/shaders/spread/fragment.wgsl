@@ -1,5 +1,5 @@
 // Spreading front: a ragged edge that grows outward from one point across a mesh.
-// Kenaz burns the sail with it (discard on), Isa will reuse it for frost (discard off).
+// Kenaz burns the sail with it (discard on, radial), Isa frosts the ship with it (discard off, planar).
 //
 // It's plugged into a lit material (MeshStandardNodeMaterial), so it returns surface values in linear
 // color, not a display-ready picture: the material still does the lighting, fog and tone mapping.
@@ -12,6 +12,9 @@
 //   baseColor       the mesh's original flat color (linear), shown ahead of the front
 //   spreadProgress  0 = nothing reached yet, 1 = the front has passed the whole mesh
 //   spreadOrigin    local-space point where the front starts
+//   planar          0 = the front is a circle growing around spreadOrigin (Kenaz),
+//                   1 = the front is a flat level moving up and down from spreadOrigin's height along local y
+//                   (Isa: frost climbing from the waterline)
 //   spreadSize      local distance from the origin to the mesh's farthest corner (set in JS),
 //                   divides every distance so progress 0..1 fits any mesh size
 //   noiseScale      how many noise bumps fit across the mesh (higher = finer, more jagged edge)
@@ -27,6 +30,7 @@ fn spread(
   baseColor: vec3f,
   spreadProgress: f32,
   spreadOrigin: vec3f,
+  planar: f32,
   spreadSize: f32,
   noiseScale: f32,
   noiseStrength: f32,
@@ -38,13 +42,20 @@ fn spread(
   part: f32
 ) -> vec4f {
   // 1. How far is this point from where the front started?
+  //    Radial: straight-line distance to the origin point. Planar: only the height difference along local y,
+  //    abs() so the front moves both up and down from the origin's level (below the waterline too).
+  //    select(a, b, condition) = condition ? b : a.
   //    Divided by spreadSize, so 0 = at the origin and 1 = at the farthest corner of the mesh.
-  let dist = length(localPos - spreadOrigin) / spreadSize;
+  let radialDist = length(localPos - spreadOrigin);
+  let planarDist = abs(localPos.y - spreadOrigin.y);
+  let dist = select(radialDist, planarDist, planar > 0.5) / spreadSize;
 
-  // 2. Noise to make the front ragged instead of a perfect circle.
-  //    Sampled on the mesh's local x/y (the flat sides of the sail), also divided by spreadSize so the
+  // 2. Noise to make the front ragged instead of a perfect circle (or a perfectly straight level).
+  //    Radial: sampled on the mesh's local x/y (the flat sides of the sail). Planar: on x/z, the horizontal
+  //    directions along the level, so the frost line wobbles along the hull. Divided by spreadSize so the
   //    pattern has the same number of bumps on any mesh size. fbm() returns 0..1.
-  let n = fbm(localPos.xy / spreadSize * noiseScale);
+  let noisePos = select(localPos.xy, localPos.xz, planar > 0.5);
+  let n = fbm(noisePos / spreadSize * noiseScale);
 
   // 3. Push the distance in and out with the noise: (n - 0.5) is -0.5..0.5, so some points act closer
   //    to the origin (the front reaches them early) and some farther (reached late).

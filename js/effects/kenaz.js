@@ -72,6 +72,8 @@ export const createKenaz = ({ uniforms, scene, camera, listener, getSail, gui })
     charColor: uniform(new THREE.Color(KENAZ_CHAR_COLOR)),
     // fire: burnt cloth is cut away
     discardBurnt: uniform(1),
+    // a circle growing around the origin
+    planar: uniform(0),
   };
   const spreadFn = wgslFn(spreadShader);
 

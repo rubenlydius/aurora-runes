@@ -7,11 +7,13 @@ import { createLaguz } from './laguz.js';
 import { createKenaz } from './kenaz.js';
 import { createHagalaz } from './hagalaz.js';
 import { createGebo } from './gebo.js';
+import { createIsa } from './isa.js';
 
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
-// new effect: write js/effects/<rune>.js returning a trigger function, add it to `effects` below
-export const createEffects = ({ uniforms, scene, camera, water, getSail, physics, gui }) => {
+// new effect: write js/effects/<rune>.js returning a trigger function, add it to `effects` below.
+// returns state the render loop reads: shipFreeze (Isa holds the ship still)
+export const createEffects = ({ uniforms, scene, camera, water, lighting, getShip, getSail, physics, gui }) => {
   const label = createRuneLabel({ gui });
   // one audio listener on the camera for all effect sounds
   const listener = new THREE.AudioListener();
@@ -25,6 +27,9 @@ export const createEffects = ({ uniforms, scene, camera, water, getSail, physics
     hagalaz: createHagalaz({ uniforms, scene, camera, water, physics, listener, gui }),
     gebo: createGebo({ uniforms, camera, scene, gui }),
   };
+  // Isa also hands back the ship's freeze state
+  const isa = createIsa({ uniforms, water, lighting, getShip, gui });
+  effects.isa = isa.trigger;
 
   window.addEventListener('gesture', (event) => {
     const { name } = event.detail;
@@ -33,4 +38,6 @@ export const createEffects = ({ uniforms, scene, camera, water, getSail, physics
     // unknown names are ignored
     effects[name.toLowerCase()]?.(event.detail);
   });
+
+  return { shipFreeze: isa.shipFreeze };
 };

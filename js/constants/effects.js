@@ -200,3 +200,39 @@ export const GEBO_FINALE_SPEED = 0.5;
 export const GEBO_FINALE_LIFETIME = 2.5;
 export const GEBO_FINALE_BRIGHTNESS = 2;
 export const GEBO_FINALE_FLASH = 0.25;
+
+// Isa (ice): the fjord freezes from the shore outward, frost climbs the ship from the waterline, the ship and
+// the aurora stop moving; then it all thaws
+// timing (seconds): freeze (water front, aurora slowing), hold, thaw (ice and frost fade away, aurora speeds up)
+export const ISA_FREEZE_DURATION = 3;
+export const ISA_HOLD = 2;
+export const ISA_THAW_DURATION = 3;
+// water ice (js/shaders/water/fragment.wgsl): where it grows from (world x, z: by the ship), how
+// far the front gets (world units), its curve (> 1: slow near the shore, faster far out) and raggedness
+export const ISA_ORIGIN = { x: 5, z: -17 };
+export const ISA_RADIUS = 500;
+export const ISA_CURVE = 4;
+export const ISA_EDGE_NOISE = 1.75;
+// ice look: bluish white (display values like the water color), how much of it shows on the surface,
+// frosted (blurred) reflection, crack brightness and cracks per world unit
+export const ISA_ICE_COLOR = 0x50cded;
+export const ISA_ICE_TINT = 0.12;
+export const ISA_ICE_BLUR = 0.04;
+export const ISA_CRACK_STRENGTH = 0.7;
+export const ISA_CRACK_SCALE = 0.2;
+// ship frost (js/shaders/spread/fragment.wgsl, planar from the waterline): starts when the water ice reaches
+// the ship and covers it over ISA_FROST_DURATION; the ship's motion eases to a stop over ISA_SHIP_STOP
+export const ISA_FROST_DURATION = 2.5;
+export const ISA_SHIP_STOP = 1.2;
+// frost front: icy white edge (emissive), the frosted color and how much of it covers the original colors
+export const ISA_FROST_EDGE_COLOR = 0xeaf6ff;
+export const ISA_FROST_EDGE_INTENSITY = 1.2;
+export const ISA_FROST_COLOR = 0xbfdcf2;
+export const ISA_FROST_AMOUNT = 0.7;
+export const ISA_FROST_EDGE_WIDTH = 0.05;
+export const ISA_FROST_NOISE_STRENGTH = 0.15;
+export const ISA_FROST_NOISE_SCALE = 8;
+// lights while frozen: key light tinted cooler (multiplied onto the aurora color), fill light brighter (ice
+// reflects more light)
+export const ISA_KEY_TINT = 0xc8dcff;
+export const ISA_HEMI_BOOST = 1.5;

@@ -47,8 +47,9 @@ export const createShip = async ({ gui } = {}) => {
     return heightAt(sample.x, sample.z);
   };
 
-  // heightAt(x, z): the swell's height at world x, z (0 on calm water); swellHeight: the current wave height
-  const update = (time, heightAt, swellHeight = 0) => {
+  // heightAt(x, z): the swell's height at world x, z (0 on calm water); swellHeight: the current wave height;
+  // frozen: 0..1, held by the ice (Isa): the floating stops where it is and the rocking eases out
+  const update = (time, heightAt, swellHeight = 0, frozen = 0) => {
     // floating: rise with the average water height, tip toward the water's slope under the hull
     const delta = lastTime === null ? 0 : time - lastTime;
     lastTime = time;
@@ -64,17 +65,20 @@ export const createShip = async ({ gui } = {}) => {
       const targetRoll = Math.atan2(starboard - port, 2 * float.halfWidth * scale);
       const targetPitch = -Math.atan2(bow - stern, 2 * float.halfLength * scale);
       // ease toward the water instead of snapping to it: the ship has weight
-      const follow = 1 - Math.exp(-float.response * delta);
+      // frozen in: follow less and less, at 1 the pivot stays exactly where the ice caught it
+      const follow = (1 - Math.exp(-float.response * delta)) * (1 - frozen);
       pivot.position.y += (targetY - pivot.position.y) * follow;
       pivot.rotation.z += (targetRoll - pivot.rotation.z) * follow;
       pivot.rotation.x += (targetPitch - pivot.rotation.x) * follow;
     }
 
     const t = time * rocking.speed;
+    // the ice also stills the gentle rocking (eases to the upright pose)
+    const free = 1 - frozen;
     // two sines at unrelated speeds per motion, so it never repeats like a metronome
-    model.rotation.z = rocking.roll * (Math.sin(t) * 0.7 + Math.sin(t * 0.63 + 1.7) * 0.3);
-    model.rotation.x = rocking.pitch * (Math.sin(t * 0.81 + 0.4) * 0.7 + Math.sin(t * 0.47 + 2.9) * 0.3);
-    model.position.y = rocking.bob * (Math.sin(t * 0.9 + 1.1) * 0.7 + Math.sin(t * 0.55 + 0.3) * 0.3);
+    model.rotation.z = free * rocking.roll * (Math.sin(t) * 0.7 + Math.sin(t * 0.63 + 1.7) * 0.3);
+    model.rotation.x = free * rocking.pitch * (Math.sin(t * 0.81 + 0.4) * 0.7 + Math.sin(t * 0.47 + 2.9) * 0.3);
+    model.position.y = free * rocking.bob * (Math.sin(t * 0.9 + 1.1) * 0.7 + Math.sin(t * 0.55 + 0.3) * 0.3);
   };
 
   if (gui) {
