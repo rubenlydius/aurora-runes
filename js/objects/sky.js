@@ -4,10 +4,36 @@ import { wgslFn, positionWorld, cameraPosition, screenCoordinate, colorSpaceToWo
 
 import auroraFragmentShader from '../shaders/aurora/fragment.wgsl?raw';
 
-export const SKY_RADIUS = 500;
+// big enough to sit behind the farthest mountain: the sky is drawn last and would cover anything beyond it
+export const SKY_RADIUS = 1000;
 
 // inverted sphere around the camera, the aurora shader paints its inside
-export const createSky = ({ iTime, iResolution }) => {
+export const createSky = ({
+  iTime,
+  iResolution,
+  pointerPoint,
+  pointerStrength,
+  pointerRadius,
+  pointerBoost,
+  pointerPull,
+  pointerCore,
+  pointerCoreSize,
+  pointerCreate,
+  pointerTrail,
+  pointerTrailPoints,
+  pointerTrailCount,
+  skyBrightness,
+  skyTint,
+  auroraTime,
+  dayAmount,
+  sunDirection,
+  dawnHorizonColor,
+  dawnZenithColor,
+  sunGlowSize,
+  flashAmount,
+  auroraIntensity,
+  auroraHueShift,
+}) => {
   const geometry = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   const aurora = wgslFn(auroraFragmentShader);
 
@@ -19,6 +45,28 @@ export const createSky = ({ iTime, iResolution }) => {
       fragCoord: screenCoordinate,
       iTime,
       iResolution,
+      pointerPoint,
+      pointerStrength,
+      pointerRadius,
+      pointerBoost,
+      pointerPull,
+      pointerCore,
+      pointerCoreSize,
+      pointerCreate,
+      pointerTrail,
+      pointerTrailPoints,
+      pointerTrailCount,
+      skyBrightness,
+      skyTint,
+      auroraTime,
+      dayAmount,
+      sunDirection,
+      dawnHorizonColor,
+      dawnZenithColor,
+      sunGlowSize,
+      flashAmount,
+      auroraIntensity,
+      auroraHueShift,
     }),
     THREE.SRGBColorSpace,
   );

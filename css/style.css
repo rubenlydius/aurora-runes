@@ -18,4 +18,6 @@ body
     outline: none;
     width: 100%;
     height: 100%;
+    /* touch dragging draws on the sky instead of scrolling or zooming the page */
+    touch-action: none;
 }

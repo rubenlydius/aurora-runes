@@ -1,7 +1,6 @@
 // "Auroras" by nimitz — https://www.shadertoy.com/view/XtGGRt
 import * as THREE from 'three/webgpu';
-import { uniform } from 'three/tsl';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { uniform, texture } from 'three/tsl';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
@@ -9,15 +8,23 @@ import { DEBUG } from './constants/debug.js';
 import { createSky, SKY_RADIUS } from './objects/sky.js';
 import { createWater } from './objects/water.js';
 import { createShip } from './objects/ship.js';
-import { createCamera, addCameraGui } from './objects/camera.js';
-import { createLighting } from './objects/lighting.js';
+import { createMountains } from './objects/mountains.js';
+import { createCamera, createLookAround } from './objects/camera.js';
+import { createLighting, rawColorFromHex } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
 import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
+import { SUN_GLOW_SIZE, DAWN_HORIZON_COLOR, DAWN_ZENITH_COLOR } from './constants/day.js';
+import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAIL } from './constants/aurora.js';
+import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
+import { createGestureInput } from './gestures/gestureInput.js';
+import { createEffects } from './effects/index.js';
+import { createBackgroundMusic } from './audio/backgroundMusic.js';
+import { createPhysics } from './physics/world.js';
 
 const $canvas = document.getElementById('webgl');
-let renderer, camera, scene, controls, stats;
-let sky, water, ship, sail, shipUpdate, lighting;
+let renderer, camera, scene, stats;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -33,9 +40,42 @@ const uniforms = {
   shipRotation: uniform(0),
   shipReflectionSize: uniform(new THREE.Vector2(1, 1)),
   shipReflectionStrength: uniform(0),
+  // pointer glow in the aurora (sky and its reflection), driven by js/interaction/auroraPointer.js
+  pointerPoint: uniform(new THREE.Vector2()),
+  pointerStrength: uniform(0),
+  // radius and core size are set every frame, scaled for the pointer's distance
+  pointerRadius: uniform(1),
+  pointerBoost: uniform(POINTER_BOOST),
+  pointerPull: uniform(POINTER_PULL),
+  pointerCore: uniform(POINTER_CORE),
+  pointerCoreSize: uniform(0.1),
+  pointerCreate: uniform(POINTER_CREATE),
+  pointerTrail: uniform(POINTER_TRAIL),
+  // the trail's recorded path (one texel per point) and how many points are in use
+  pointerTrailPoints: texture(createTrailTexture()),
+  pointerTrailCount: uniform(1),
+  // shared mood of the sky and its reflection, animated by the rune effects (defaults = unchanged)
+  skyBrightness: uniform(1),
+  skyTint: uniform(new THREE.Color(1, 1, 1)),
+  auroraSpeed: uniform(1),
+  // what the aurora animates with: summed up from auroraSpeed every frame, so speed changes stay smooth
+  auroraTime: uniform(0),
+  // midnight sun: 0 = night, 1 = full dawn sky (aurora and stars gone); also drives the lighting
+  dayAmount: uniform(0),
+  // set from the azimuth / elevation constants in js/objects/lighting.js
+  sunDirection: uniform(new THREE.Vector3(0, 0, -1)),
+  dawnHorizonColor: uniform(rawColorFromHex(DAWN_HORIZON_COLOR)),
+  dawnZenithColor: uniform(rawColorFromHex(DAWN_ZENITH_COLOR)),
+  sunGlowSize: uniform(SUN_GLOW_SIZE),
+  // lightning: 0 = none, pulses during a Thurisaz strike (sky, water and key light follow it)
+  flashAmount: uniform(0),
+  // aurora surge (Dagaz): brightness multiplier and hue shift of the aurora only (defaults = unchanged)
+  auroraIntensity: uniform(1),
+  auroraHueShift: uniform(0),
 };
 
-const init = () => {
+// async: Rapier's WebAssembly has to start before the scene does
+const init = async () => {
   // wgslFn shaders don't run on the WebGL2 fallback
   if (!navigator.gpu) {
     document.body.innerHTML = '<p style="color:#fff;font-family:sans-serif;padding:2rem">This experience needs WebGPU. Open it in Chrome or Edge.</p>';
@@ -52,8 +92,11 @@ const init = () => {
   // sliders for tweaking constants, only in debug mode
   const gui = DEBUG ? new GUI() : null;
 
+  // Rapier physics world (Hagalaz hail), stepped in draw()
+  physics = await createPhysics({ scene, gui });
+
   // the sky and water shaders ignore lights, only the lit materials (ship) use them
-  lighting = createLighting({ auroraColor: uniforms.auroraColor, exposure: uniforms.exposure, gui });
+  lighting = createLighting({ ...uniforms, gui });
   scene.add(...lighting.lights);
   scene.fog = lighting.fog;
 
@@ -61,8 +104,8 @@ const init = () => {
   scene.add(sky);
 
   // shares the sky's uniforms, so the reflection moves in sync
-  water = createWater(uniforms);
-  scene.add(water);
+  water = createWater({ ...uniforms, gui });
+  scene.add(water.mesh);
 
   // the model loads asynchronously, the scene keeps rendering in the meantime
   createShip({ gui })
@@ -72,15 +115,25 @@ const init = () => {
       shipUpdate = result.update;
       applyToneMapping(ship, { renderer, exposure: uniforms.exposure });
       scene.add(ship);
+      // the hull (with mast and oars) and the sail as colliders that follow the floating ship
+      const hull = ship.getObjectByName('Viking_Ship');
+      if (hull) physics.addKinematicTrimesh(hull);
+      else console.warn('No "Viking_Ship" object in the ship model, the hail falls through it');
+      if (sail) physics.addKinematicTrimesh(sail);
     })
     .catch((error) => console.error('Could not load the Viking ship', error));
 
+  // same as the ship: loads asynchronously, lit and tone mapped like it
+  createMountains({ gui })
+    .then((mountains) => {
+      applyToneMapping(mountains, { renderer, exposure: uniforms.exposure });
+      scene.add(mountains);
+    })
+    .catch((error) => console.error('Could not load the mountains', error));
+
   if (DEBUG) {
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    // also sets the orbit target to the point the camera looks at
-    addCameraGui({ gui, camera, controls });
+    // Shift + drag turns the camera in place
+    createLookAround({ camera, canvas: $canvas, gui });
 
     const reflectionFolder = gui.addFolder('Ship reflection');
     reflectionFolder.add(shipReflection, 'strength', 0, 1, 0.01);
@@ -92,6 +145,16 @@ const init = () => {
     document.body.appendChild(stats.dom);
   }
 
+  // in debug mode Shift + drag looks around, so the aurora pointer ignores those drags
+  auroraPointer = createAuroraPointer({ canvas: $canvas, camera, uniforms, shiftLooksAround: DEBUG, gui });
+
+  // $P recognition of the spacebar drawings; record mode in debug
+  createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
+  // recognised runes -> effects
+  effects = createEffects({ uniforms, scene, camera, water, lighting, getShip: () => ship, getSail: () => sail, physics, gui });
+  // starts on the first input, rotates through the tracks
+  createBackgroundMusic({ gui });
+
   window.addEventListener('resize', resize);
   resize();
 
@@ -101,18 +164,32 @@ const init = () => {
 const draw = () => {
   timer.update();
   uniforms.iTime.value = timer.getElapsed();
+  const delta = timer.getDelta();
+  // Isa's ice stops the aurora (1 - auroraFreeze), whatever auroraSpeed other effects set
+  uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value * (1 - effects.auroraFreeze.value);
+  water.update(delta);
   lighting.update(uniforms.iTime.value);
+  auroraPointer.update(delta);
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
-    shipUpdate(uniforms.iTime.value);
+    // the ship floats on the swell
+    shipUpdate(
+      uniforms.iTime.value,
+      (x, z) => water.waveHeightAt(x, z, camera.position),
+      water.waves.current.value,
+      // Isa: held still by the ice
+      effects.shipFreeze.value,
+    );
     uniforms.shipPosition.value.copy(ship.position);
     uniforms.shipRotation.value = ship.rotation.y;
     uniforms.shipReflectionSize.value.set(shipReflection.width, shipReflection.length).multiplyScalar(ship.scale.x);
     uniforms.shipReflectionStrength.value = shipReflection.strength;
   }
 
-  if (controls) controls.update();
+  // fixed-step physics after the ship has moved, so the hull collider follows it
+  physics.update(delta);
+
   // keep the camera at the center of the sky sphere
   sky.position.copy(camera.position);
 
