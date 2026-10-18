@@ -20,10 +20,11 @@ import { createAuroraPointer, createTrailTexture } from './interaction/auroraPoi
 import { createGestureInput } from './gestures/gestureInput.js';
 import { createEffects } from './effects/index.js';
 import { createBackgroundMusic } from './audio/backgroundMusic.js';
+import { createPhysics } from './physics/world.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
-let sky, water, ship, sail, shipUpdate, lighting, auroraPointer;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -70,7 +71,8 @@ const uniforms = {
   flashAmount: uniform(0),
 };
 
-const init = () => {
+// async: Rapier's WebAssembly has to start before the scene does
+const init = async () => {
   // wgslFn shaders don't run on the WebGL2 fallback
   if (!navigator.gpu) {
     document.body.innerHTML = '<p style="color:#fff;font-family:sans-serif;padding:2rem">This experience needs WebGPU. Open it in Chrome or Edge.</p>';
@@ -86,6 +88,9 @@ const init = () => {
 
   // sliders for tweaking constants, only in debug mode
   const gui = DEBUG ? new GUI() : null;
+
+  // Rapier physics world (Hagalaz hail), stepped in draw()
+  physics = await createPhysics({ scene, gui });
 
   // the sky and water shaders ignore lights, only the lit materials (ship) use them
   lighting = createLighting({ ...uniforms, gui });
@@ -107,6 +112,11 @@ const init = () => {
       shipUpdate = result.update;
       applyToneMapping(ship, { renderer, exposure: uniforms.exposure });
       scene.add(ship);
+      // the hull (with mast and oars) and the sail as colliders that follow the floating ship
+      const hull = ship.getObjectByName('Viking_Ship');
+      if (hull) physics.addKinematicTrimesh(hull);
+      else console.warn('No "Viking_Ship" object in the ship model, the hail falls through it');
+      if (sail) physics.addKinematicTrimesh(sail);
     })
     .catch((error) => console.error('Could not load the Viking ship', error));
 
@@ -138,7 +148,7 @@ const init = () => {
   // $P recognition of the spacebar drawings; record mode in debug
   createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
   // recognised runes -> effects
-  createEffects({ uniforms, scene, camera, water, getSail: () => sail, gui });
+  createEffects({ uniforms, scene, camera, water, getSail: () => sail, physics, gui });
   // starts on the first input, rotates through the tracks
   createBackgroundMusic({ gui });
 
@@ -170,6 +180,9 @@ const draw = () => {
     uniforms.shipReflectionSize.value.set(shipReflection.width, shipReflection.length).multiplyScalar(ship.scale.x);
     uniforms.shipReflectionStrength.value = shipReflection.strength;
   }
+
+  // fixed-step physics after the ship has moved, so the hull collider follows it
+  physics.update(delta);
 
   // keep the camera at the center of the sky sphere
   sky.position.copy(camera.position);

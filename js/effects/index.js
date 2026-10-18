@@ -5,11 +5,12 @@ import { createSowilo } from './sowilo.js';
 import { createThurisaz } from './thurisaz.js';
 import { createLaguz } from './laguz.js';
 import { createKenaz } from './kenaz.js';
+import { createHagalaz } from './hagalaz.js';
 
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
 // new effect: write js/effects/<rune>.js returning a trigger function, add it to `effects` below
-export const createEffects = ({ uniforms, scene, camera, water, getSail, gui }) => {
+export const createEffects = ({ uniforms, scene, camera, water, getSail, physics, gui }) => {
   const label = createRuneLabel({ gui });
   // one audio listener on the camera for all effect sounds
   const listener = new THREE.AudioListener();
@@ -20,6 +21,7 @@ export const createEffects = ({ uniforms, scene, camera, water, getSail, gui }) 
     thurisaz: createThurisaz({ uniforms, scene, camera, listener, getSail, gui }),
     laguz: createLaguz({ uniforms, water, listener, gui }),
     kenaz: createKenaz({ uniforms, scene, camera, listener, getSail, gui }),
+    hagalaz: createHagalaz({ uniforms, scene, camera, water, physics, listener, gui }),
   };
 
   window.addEventListener('gesture', (event) => {

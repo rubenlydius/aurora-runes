@@ -39,7 +39,7 @@ export const rawColorFromHex = (hex) => new THREE.Color().setHex(hex, THREE.Line
 
 // night lighting: aurora key light, dim fill light and fog (no shadows),
 // plus the midnight sun: a warm sun light, fill and fog that follow dayAmount
-export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, flashAmount, gui }) => {
+export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, flashAmount, gui }) => {
   const params = {
     keyIntensity: KEY_LIGHT_INTENSITY,
     pulseAmount: KEY_LIGHT_PULSE_AMOUNT,
@@ -75,7 +75,8 @@ export const createLighting = ({ auroraColor, exposure, dayAmount, sunDirection,
   const fog = new THREE.FogExp2(FOG_COLOR, FOG_DENSITY);
 
   const update = (time) => {
-    keyLight.intensity = params.keyIntensity * (1 + params.pulseAmount * Math.sin(time * params.pulseSpeed))
+    // the key light is the aurora's light, so it dims with the sky (skyBrightness, 1 = normal; Hagalaz darkens it)
+    keyLight.intensity = params.keyIntensity * skyBrightness.value * (1 + params.pulseAmount * Math.sin(time * params.pulseSpeed))
       // lightning flash, flashAmount is animated by the Thurisaz timeline
       + params.keyFlash * flashAmount.value;
 

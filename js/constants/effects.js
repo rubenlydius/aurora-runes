@@ -116,3 +116,43 @@ export const KENAZ_EMBER_COLOR = 0xffa040;
 export const KENAZ_EMBER_SIZE = 0.25;
 export const KENAZ_EMBER_RISE = 0.8;
 export const KENAZ_EMBER_LIFETIME = 3;
+
+// Hagalaz (hail): a short hailstorm, the stones are Rapier physics bodies (js/physics/world.js) that bounce
+// off the ship, settle on the deck and melt, or splash into the water
+export const HAGALAZ_SOUND = 'sounds/hail.m4a';
+export const HAGALAZ_VOLUME = 0.8;
+// storm mood: sky brightness and a cold grey tint (sRGB values as-is, like the sky shader); the key light
+// is the aurora, so it dims along with skyBrightness (js/objects/lighting.js)
+export const HAGALAZ_SKY_BRIGHTNESS = 0.6;
+export const HAGALAZ_SKY_TINT = 0xc4ccd6;
+// timing (seconds): the sky darkens, then hail falls for HAGALAZ_DURATION (the rate ramps up over the
+// first and down over the last HAGALAZ_RATE_RAMP seconds), then the sky eases back
+export const HAGALAZ_SKY_RAMP_IN = 1;
+export const HAGALAZ_DURATION = 5;
+export const HAGALAZ_RATE_RAMP = 1.5;
+export const HAGALAZ_SKY_RAMP_OUT = 2;
+// peak stones per second
+export const HAGALAZ_RATE = 80;
+// most stones alive at once (a pool: never more meshes or bodies than this); the slider goes up to the max
+export const HAGALAZ_CAP = 300;
+export const HAGALAZ_CAP_MAX = 600;
+// where stones appear: a box centred over the ship (x, z offsets from it, world units), this high above
+// the water, this wide and deep; HAGALAZ_SPAWN_WIDE of them fall in a box this many times larger, over the
+// rest of the visible water
+export const HAGALAZ_SPAWN_AREA = { offsetX: 0, offsetZ: 0, height: 28, width: 14, depth: 30 };
+export const HAGALAZ_SPAWN_WIDE = 0.35;
+export const HAGALAZ_SPAWN_WIDE_SCALE = 3;
+// downward speed when they appear (world units per second), plus up to this much sideways drift
+export const HAGALAZ_FALL_SPEED = 8;
+export const HAGALAZ_WIND = 5;
+// stone radius range (world units)
+export const HAGALAZ_SIZE_MIN = 0.05;
+export const HAGALAZ_SIZE_MAX = 0.12;
+// bounciness (0 = dead stop, 1 = bounces back as high) and grip
+export const HAGALAZ_RESTITUTION = 0.7;
+export const HAGALAZ_FRICTION = 0.6;
+// landed stones: stay this long once at rest (seconds), then melt (shrink away) over HAGALAZ_MELT_TIME
+export const HAGALAZ_REST_TIME = 3;
+export const HAGALAZ_MELT_TIME = 2;
+// stone color (lit, hex sRGB)
+export const HAGALAZ_COLOR = 0xdcebff;

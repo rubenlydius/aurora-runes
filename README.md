@@ -16,6 +16,8 @@ https://www.shadertoy.com/view/XtGGRt
 - Fire sound effect by [Universfield](https://pixabay.com/users/universfield-28281460/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=229156) from [Pixabay](https://pixabay.com/sound-effects/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=229156).
 - Thunder sound: "Thunder_close_Boem.wav" by hantorio, https://freesound.org/s/121946/, licence: [Attribution 3.0](https://creativecommons.org/licenses/by/3.0/).
 - Waves sound: "Lapping Waves.wav" by Benboncan, https://freesound.org/s/82058/, licence: [Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Hail sound effect by [freesound_community](https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=74904) from [Pixabay](https://pixabay.com/sound-effects/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=74904).
+- [Rapier](https://rapier.rs) physics engine by Dimforge (Apache 2.0).
 
 ## Course
 
