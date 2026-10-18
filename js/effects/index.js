@@ -28,7 +28,7 @@ export const createEffects = ({ uniforms, scene, camera, water, lighting, getShi
     kenaz: createKenaz({ uniforms, scene, camera, listener, getSail, gui }),
     hagalaz: createHagalaz({ uniforms, scene, camera, water, physics, listener, gui }),
     gebo: createGebo({ uniforms, camera, scene, gui }),
-    dagaz: createDagaz({ uniforms, lighting, gui }),
+    dagaz: createDagaz({ uniforms, lighting, listener, gui }),
     tiwaz: createTiwaz({ uniforms, scene, camera, lighting, listener, gui }),
   };
   // Isa also hands back the ship's freeze state
