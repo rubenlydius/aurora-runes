@@ -66,3 +66,17 @@ export const THURISAZ_DISTANT_THUNDER_DELAY_MIN = 1;
 export const THURISAZ_DISTANT_THUNDER_DELAY_MAX = 2;
 export const THURISAZ_DISTANT_VOLUME = 0.35;
 export const THURISAZ_DISTANT_FILTER_FREQUENCY = 600;
+
+// Laguz (water): a swell rolls through the fjord, the ship rides it (js/objects/ship.js), waves sound along
+export const LAGUZ_SOUND = 'sounds/waves002.m4a';
+export const LAGUZ_VOLUME = 0.8;
+// swell at its peak: wave height (world units, the camera is about 2.2 above the water), and multipliers
+// on the normal ripples and aurora speed
+export const LAGUZ_WAVE_HEIGHT = 0.9;
+export const LAGUZ_RIPPLE_STRENGTH = 2;
+export const LAGUZ_RIPPLE_SPEED = 2;
+export const LAGUZ_AURORA_SPEED = 2;
+// swell timing (seconds): rise, stay, ease back (the sound fades in and out with it, the ship settles with it)
+export const LAGUZ_RAMP_IN = 1.5;
+export const LAGUZ_HOLD = 3;
+export const LAGUZ_RAMP_OUT = 5;

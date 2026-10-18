@@ -1,6 +1,8 @@
 // Calm fjord water that mirrors the aurora sky.
-// js/objects/water.js appends ../aurora/fragment.wgsl to this file, so auroraShader() and its helpers
-// are available here. Main function first (wgslFn reads its signature), helpers below.
+// js/objects/water.js appends swell.wgsl and ../aurora/fragment.wgsl to this file, so swell(), auroraShader()
+// and their helpers are available here. Main function first (wgslFn reads its signature), helpers below.
+// (no comments inside the parameter list: wgslFn parses it as text)
+// rippleTime: ripple animation time, summed up in JS from the ripple speed every frame (no jumps when it changes)
 fn waterShader(
   worldPos: vec3f,
   camPos: vec3f,
@@ -10,7 +12,7 @@ fn waterShader(
   baseColor: vec3f,
   rippleStrength: f32,
   rippleScale: f32,
-  rippleSpeed: f32,
+  rippleTime: f32,
   rippleFadeDistance: f32,
   shipPosition: vec3f,
   shipRotation: f32,
@@ -29,20 +31,26 @@ fn waterShader(
   pointerTrailCount: f32,
   skyBrightness: f32,
   skyTint: vec3f,
-  auroraSpeed: f32,
+  auroraTime: f32,
   dayAmount: f32,
   sunDirection: vec3f,
   dawnHorizonColor: vec3f,
   dawnZenithColor: vec3f,
   sunGlowSize: f32,
   flashAmount: f32,
+  waveHeight: f32,
+  waveDirection: f32,
+  waveLength: f32,
+  waveSpeed: f32,
+  waveSharpness: f32,
+  waveFadeDistance: f32,
 ) -> vec4f {
   // view direction: from the camera through this point on the water
   let viewDir = normalize(worldPos - camPos);
 
   // ripple slopes: sample the height field at this point and a small step along x and z (world-fixed)
   let p = worldPos.xz * rippleScale;
-  let t = iTime * rippleSpeed;
+  let t = rippleTime;
   let e = 0.05;
   let h = waterHeight(p, t);
   let dhdx = (waterHeight(p + vec2f(e, 0.0), t) - h) / e;
@@ -52,8 +60,11 @@ fn waterShader(
   let dist = length(worldPos - camPos);
   let strength = rippleStrength * exp(-dist / rippleFadeDistance);
 
-  // normal of a height field y = h(x, z) is (-dh/dx, 1, -dh/dz), slopes scaled down to a slight tilt
-  let normal = normalize(vec3f(-dhdx * strength, 1.0, -dhdz * strength));
+  // the big swell's slopes (the vertex shader lifts the surface by the same swell)
+  let sw = swell(worldPos.xz, camPos.xz, iTime, waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance);
+
+  // normal of a height field y = h(x, z) is (-dh/dx, 1, -dh/dz), ripple slopes scaled down to a slight tilt
+  let normal = normalize(vec3f(-(dhdx * strength + sw.y), 1.0, -(dhdz * strength + sw.z)));
 
   // bounce the view ray, but never below the horizon (auroraShader normalizes it again)
   let bounced = reflect(viewDir, normal);
@@ -65,7 +76,7 @@ fn waterShader(
     reflDir, fragCoord, iTime, iResolution,
     pointerPoint, pointerStrength, pointerRadius, pointerBoost, pointerPull, pointerCore, pointerCoreSize,
     pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
-    skyBrightness, skyTint, auroraSpeed,
+    skyBrightness, skyTint, auroraTime,
     dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize,
     flashAmount,
   ).rgb;

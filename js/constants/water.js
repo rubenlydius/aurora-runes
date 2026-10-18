@@ -13,3 +13,18 @@ export const RIPPLE_SCALE = 0.3;
 export const RIPPLE_SPEED = 0.4;
 // distance (world units) over which the ripples calm down, prevents flicker near the horizon
 export const RIPPLE_FADE_DISTANCE = 100;
+
+// swell: real waves that lift the water surface (vertex shader) and the ship, tweakable in debug mode.
+// height is 0 at rest (calm, flat water); the Laguz effect raises it
+export const WAVE_HEIGHT = 0;
+// direction the waves travel, in degrees in the xz plane (0 = +x, 90 = +z); 40 hits the ship mostly side-on
+export const WAVE_DIRECTION = 40;
+// length of the longest wave (world units), speed multiplier on deep-water speed, crest sharpness (1 = sine)
+export const WAVE_LENGTH = 14;
+export const WAVE_SPEED = 1;
+export const WAVE_SHARPNESS = 1.6;
+// distance (world units) over which the waves die down, far water stays flat
+export const WAVE_FADE_DISTANCE = 80;
+// grid segments of the water plane per side; vertices are packed toward the center (the camera),
+// about 0.7 units apart at the ship, coarser far away where the waves have faded
+export const WATER_SEGMENTS = 384;

@@ -61,7 +61,7 @@ const addPulse = (timeline, pulse, at, { duration = 1, flickers = 1 } = {}) => {
 
 // Thurisaz (thunder): a bolt strikes the ship's mast with close thunder, then 1-3 smaller bolts along the
 // (stand-in) ridge with muffled distant thunder. One GSAP timeline per strike times everything
-export const createThurisaz = ({ uniforms, scene, camera, getSail, gui }) => {
+export const createThurisaz = ({ uniforms, scene, camera, listener, getSail, gui }) => {
   const params = {
     strikeIntensity: THURISAZ_STRIKE_LIGHT_INTENSITY,
     flash: THURISAZ_FLASH,
@@ -95,9 +95,7 @@ export const createThurisaz = ({ uniforms, scene, camera, getSail, gui }) => {
   const strikeLight = new THREE.PointLight(THURISAZ_STRIKE_LIGHT_COLOR, 0, 0, 2);
   scene.add(main.line, ...distant.map((bolt) => bolt.line), strikeLight);
 
-  // --- audio: one listener on the camera, one sound for the close thunder, one per distant bolt ---
-  const listener = new THREE.AudioListener();
-  camera.add(listener);
+  // --- audio: the shared listener, one sound for the close thunder, one per distant bolt ---
   const closeSound = new THREE.Audio(listener);
   const distantSounds = distant.map(() => {
     const sound = new THREE.Audio(listener);

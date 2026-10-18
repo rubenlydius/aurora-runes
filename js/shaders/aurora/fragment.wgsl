@@ -9,7 +9,8 @@
 // newest first; pointerTrailCount says how many texels are in use.
 // radius and core size arrive already scaled for the pointer's distance, so they look similar everywhere
 // mood (shared with the water, animated by the rune effects): skyBrightness and skyTint multiply the final
-// color, auroraSpeed scales the aurora's animation time; the defaults 1, white, 1 leave the look unchanged
+// color (defaults 1 and white leave the look unchanged). auroraTime: the aurora's animation time, summed up
+// in JS from auroraSpeed every frame, so changing the speed never makes it jump
 // day (midnight sun): dayAmount 0..1 blends the night background toward a dawn gradient (dawnHorizonColor
 // -> dawnZenithColor, sRGB) and fades the aurora and stars out; a warm glow of size sunGlowSize (radians)
 // sits around sunDirection. dayAmount 0 leaves the night exactly as it was
@@ -32,7 +33,7 @@ fn auroraShader(
   pointerTrailCount: f32,
   skyBrightness: f32,
   skyTint: vec3f,
-  auroraSpeed: f32,
+  auroraTime: f32,
   dayAmount: f32,
   sunDirection: vec3f,
   dawnHorizonColor: vec3f,
@@ -40,7 +41,6 @@ fn auroraShader(
   sunGlowSize: f32,
   flashAmount: f32,
 ) -> vec4f {
-  let auroraTime = iTime * auroraSpeed;
   let ro = vec3f(0.0, 0.0, -6.7);
   let viewDir = normalize(rayDir);
   var rd = viewDir;

@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { wgslFn, uniform, positionWorld, cameraPosition, screenCoordinate, colorSpaceToWorking } from 'three/tsl';
+import { wgslFn, uniform, positionLocal, positionWorld, cameraPosition, screenCoordinate, colorSpaceToWorking } from 'three/tsl';
 
 import {
   WATER_LEVEL,
@@ -9,11 +9,29 @@ import {
   RIPPLE_SCALE,
   RIPPLE_SPEED,
   RIPPLE_FADE_DISTANCE,
+  WAVE_HEIGHT,
+  WAVE_DIRECTION,
+  WAVE_LENGTH,
+  WAVE_SPEED,
+  WAVE_SHARPNESS,
+  WAVE_FADE_DISTANCE,
+  WATER_SEGMENTS,
 } from '../constants/water.js';
 import waterFragmentShader from '../shaders/water/fragment.wgsl?raw';
+import waterVertexShader from '../shaders/water/vertex.wgsl?raw';
+import swellShader from '../shaders/water/swell.wgsl?raw';
 import auroraFragmentShader from '../shaders/aurora/fragment.wgsl?raw';
 
-// calm fjord water that reflects the aurora sky, rippled in the fragment shader only
+// JS copy of swell() in js/shaders/water/swell.wgsl (keep in sync): the swell's height at world x, z
+const swellWave = (x, z, t, angle, lambda, phase, speed, sharpness) => {
+  const k = (Math.PI * 2) / lambda;
+  const w = Math.sqrt(9.81 * k) * speed;
+  const arg = (Math.cos(angle) * x + Math.sin(angle) * z) * k - w * t + phase;
+  const s = Math.max((1 + Math.sin(arg)) * 0.5, 0.0001);
+  return 2 * Math.pow(s, sharpness) - 1;
+};
+
+// fjord water that reflects the aurora sky: rippled in the fragment shader, lifted by the swell in the vertex shader
 export const createWater = ({
   iTime,
   iResolution,
@@ -34,26 +52,49 @@ export const createWater = ({
   pointerTrailCount,
   skyBrightness,
   skyTint,
-  auroraSpeed,
+  auroraTime,
   dayAmount,
   sunDirection,
   dawnHorizonColor,
   dawnZenithColor,
   sunGlowSize,
   flashAmount,
+  gui,
 }) => {
-  const geometry = new THREE.PlaneGeometry(WATER_SIZE, WATER_SIZE);
-  // water main function first, the aurora code after it as helpers
-  const water = wgslFn(waterFragmentShader + '\n' + auroraFragmentShader);
+  // a grid packed toward the center: u in -1..1 maps to sign(u) * u² * half size, so the cells are small near
+  // the camera (where the swell is) and large far away; laid flat, so local xz = world xz
+  const geometry = new THREE.PlaneGeometry(2, 2, WATER_SEGMENTS, WATER_SEGMENTS);
+  const positions = geometry.attributes.position;
+  const pack = (u) => Math.sign(u) * u * u * (WATER_SIZE / 2);
+  for (let i = 0; i < positions.count; i++) {
+    positions.setXY(i, pack(positions.getX(i)), pack(positions.getY(i)));
+  }
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeBoundingSphere();
+
+  // water main function first, then the swell and the aurora code as helpers
+  const water = wgslFn(waterFragmentShader + '\n' + swellShader + '\n' + auroraFragmentShader);
+  const waterVertex = wgslFn(waterVertexShader + '\n' + swellShader);
 
   // setRGB in the working color space stores the values as-is, the shader treats them as sRGB
   const baseColor = uniform(new THREE.Color().setRGB(...WATER_BASE_COLOR));
   const rippleStrength = uniform(RIPPLE_STRENGTH);
   const rippleScale = uniform(RIPPLE_SCALE);
   const rippleSpeed = uniform(RIPPLE_SPEED);
+  // what the shader animates with: summed up from rippleSpeed in update(), so speed changes stay smooth
+  const rippleTime = uniform(0);
   const rippleFadeDistance = uniform(RIPPLE_FADE_DISTANCE);
+  // swell (angles in radians in the shader, degrees in the constants and sliders)
+  const waveHeight = uniform(WAVE_HEIGHT);
+  const waveDirection = uniform(THREE.MathUtils.degToRad(WAVE_DIRECTION));
+  const waveLength = uniform(WAVE_LENGTH);
+  const waveSpeed = uniform(WAVE_SPEED);
+  const waveSharpness = uniform(WAVE_SHARPNESS);
+  const waveFadeDistance = uniform(WAVE_FADE_DISTANCE);
+  const swellUniforms = { waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance };
 
   const material = new THREE.MeshBasicNodeMaterial();
+  material.positionNode = waterVertex({ localPos: positionLocal, camPos: cameraPosition, iTime, ...swellUniforms });
   // the shader outputs display-ready (sRGB) colors, convert them to the working color space like the sky
   material.colorNode = colorSpaceToWorking(
     water({
@@ -65,7 +106,7 @@ export const createWater = ({
       baseColor,
       rippleStrength,
       rippleScale,
-      rippleSpeed,
+      rippleTime,
       rippleFadeDistance,
       shipPosition,
       shipRotation,
@@ -84,20 +125,59 @@ export const createWater = ({
       pointerTrailCount,
       skyBrightness,
       skyTint,
-      auroraSpeed,
+      auroraTime,
       dayAmount,
       sunDirection,
       dawnHorizonColor,
       dawnZenithColor,
       sunGlowSize,
       flashAmount,
+      ...swellUniforms,
     }),
     THREE.SRGBColorSpace,
   );
 
   const mesh = new THREE.Mesh(geometry, material);
-  // PlaneGeometry stands upright, lay it flat facing up
-  mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = WATER_LEVEL;
-  return mesh;
+
+  const update = (delta) => {
+    rippleTime.value += delta * rippleSpeed.value;
+  };
+
+  // the swell's height (world units, relative to WATER_LEVEL) at world x, z, exactly like the vertex shader
+  const waveHeightAt = (x, z, time, camPos) => {
+    if (waveHeight.value === 0) return 0;
+    const t = time;
+    const a = waveDirection.value;
+    const l = waveLength.value;
+    const v = waveSpeed.value;
+    const sharp = waveSharpness.value;
+    const sum = swellWave(x, z, t, a, l, 0, v, sharp)
+      + swellWave(x, z, t, a + 0.44, l * 0.62, 1.7, v, sharp) * 0.45
+      + swellWave(x, z, t, a - 0.61, l * 0.37, 4.1, v, sharp) * 0.25;
+    const fade = Math.exp(-Math.hypot(x - camPos.x, z - camPos.z) / waveFadeDistance.value);
+    return sum * (waveHeight.value * fade / 1.7);
+  };
+
+  if (gui) {
+    const params = { direction: WAVE_DIRECTION };
+    const folder = gui.addFolder('Waves (swell)');
+    // listen(): follows along while Laguz animates it
+    folder.add(waveHeight, 'value', 0, 3, 0.01).name('height').listen();
+    folder.add(params, 'direction', -180, 180, 1).name('direction (°)')
+      .onChange((value) => { waveDirection.value = THREE.MathUtils.degToRad(value); });
+    folder.add(waveLength, 'value', 2, 60, 0.5).name('length');
+    folder.add(waveSpeed, 'value', 0, 3, 0.01).name('speed');
+    folder.add(waveSharpness, 'value', 1, 4, 0.05).name('crest sharpness');
+    folder.add(waveFadeDistance, 'value', 10, 300, 1).name('fade distance');
+  }
+
+  // ripple and waves: the uniforms rune effects animate (Laguz); waveHeightAt: the ship floats on it
+  return {
+    mesh,
+    ripple: { strength: rippleStrength, speed: rippleSpeed },
+    waves: { height: waveHeight },
+    waveHeightAt,
+    update,
+  };
 };

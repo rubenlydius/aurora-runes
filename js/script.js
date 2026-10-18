@@ -57,6 +57,8 @@ const uniforms = {
   skyBrightness: uniform(1),
   skyTint: uniform(new THREE.Color(1, 1, 1)),
   auroraSpeed: uniform(1),
+  // what the aurora animates with: summed up from auroraSpeed every frame, so speed changes stay smooth
+  auroraTime: uniform(0),
   // midnight sun: 0 = night, 1 = full dawn sky (aurora and stars gone); also drives the lighting
   dayAmount: uniform(0),
   // set from the azimuth / elevation constants in js/objects/lighting.js
@@ -94,8 +96,8 @@ const init = () => {
   scene.add(sky);
 
   // shares the sky's uniforms, so the reflection moves in sync
-  water = createWater(uniforms);
-  scene.add(water);
+  water = createWater({ ...uniforms, gui });
+  scene.add(water.mesh);
 
   // the model loads asynchronously, the scene keeps rendering in the meantime
   createShip({ gui })
@@ -136,7 +138,7 @@ const init = () => {
   // $P recognition of the spacebar drawings; record mode in debug
   createGestureInput({ canvas: $canvas, debug: DEBUG, gui });
   // recognised runes -> effects
-  createEffects({ uniforms, scene, camera, getSail: () => sail, gui });
+  createEffects({ uniforms, scene, camera, water, getSail: () => sail, gui });
   // starts on the first input, rotates through the tracks
   createBackgroundMusic({ gui });
 
@@ -149,12 +151,20 @@ const init = () => {
 const draw = () => {
   timer.update();
   uniforms.iTime.value = timer.getElapsed();
+  const delta = timer.getDelta();
+  uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value;
+  water.update(delta);
   lighting.update(uniforms.iTime.value);
-  auroraPointer.update(timer.getDelta());
+  auroraPointer.update(delta);
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
-    shipUpdate(uniforms.iTime.value);
+    // the ship floats on the swell
+    shipUpdate(
+      uniforms.iTime.value,
+      (x, z) => water.waveHeightAt(x, z, uniforms.iTime.value, camera.position),
+      water.waves.height.value,
+    );
     uniforms.shipPosition.value.copy(ship.position);
     uniforms.shipRotation.value = ship.rotation.y;
     uniforms.shipReflectionSize.value.set(shipReflection.width, shipReflection.length).multiplyScalar(ship.scale.x);

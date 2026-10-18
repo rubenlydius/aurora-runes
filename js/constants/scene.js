@@ -22,3 +22,9 @@ export const MOUNTAINS = [
   { position: { x: 223, y: -2, z: -135 }, rotationY: -0.95, scale: 18 },
   { position: { x: 150, y: -2, z: -35 }, rotationY: -1.6, scale: 18 },
 ];
+
+// the ship floats on the swell (js/constants/water.js): the water height is sampled under the bow, stern
+// and both sides (model units from the center, the hull is about 2.1 long and 0.75 wide each way);
+// response: how quickly it follows (per second, lower = heavier and lazier);
+// lift: extra height (world units) per unit of wave height, keeps the hull above the crests while it lags behind
+export const SHIP_FLOAT = { halfLength: 2.1, halfWidth: 0.75, response: 5, lift: 0.4 };

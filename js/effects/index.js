@@ -1,16 +1,23 @@
+import * as THREE from 'three/webgpu';
+
 import { createRuneLabel } from './runeLabel.js';
 import { createSowilo } from './sowilo.js';
 import { createThurisaz } from './thurisaz.js';
+import { createLaguz } from './laguz.js';
 
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
 // new effect: write js/effects/<rune>.js returning a trigger function, add it to `effects` below
-export const createEffects = ({ uniforms, scene, camera, getSail, gui }) => {
+export const createEffects = ({ uniforms, scene, camera, water, getSail, gui }) => {
   const label = createRuneLabel({ gui });
+  // one audio listener on the camera for all effect sounds
+  const listener = new THREE.AudioListener();
+  camera.add(listener);
 
   const effects = {
     sowilo: createSowilo({ uniforms, gui }),
-    thurisaz: createThurisaz({ uniforms, scene, camera, getSail, gui }),
+    thurisaz: createThurisaz({ uniforms, scene, camera, listener, getSail, gui }),
+    laguz: createLaguz({ uniforms, water, listener, gui }),
   };
 
   window.addEventListener('gesture', (event) => {
