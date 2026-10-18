@@ -29,6 +29,8 @@ import {
   HAGALAZ_REST_TIME,
   HAGALAZ_MELT_TIME,
   HAGALAZ_COLOR,
+  HAGALAZ_EMISSIVE,
+  HAGALAZ_EMISSIVE_INTENSITY,
 } from '../constants/effects.js';
 
 const random = THREE.MathUtils.randFloat;
@@ -94,7 +96,13 @@ export const createHagalaz = ({ uniforms, scene, camera, water, physics, listene
   const stormTint = rawColorFromHex(HAGALAZ_SKY_TINT);
 
   // --- the stones: one InstancedMesh, one pooled rigid body + ball collider per instance ---
-  const material = new THREE.MeshStandardNodeMaterial({ color: HAGALAZ_COLOR, roughness: 0.25, metalness: 0 });
+  const material = new THREE.MeshStandardNodeMaterial({
+    color: HAGALAZ_COLOR,
+    roughness: 0.25,
+    metalness: 0,
+    emissive: HAGALAZ_EMISSIVE,
+    emissiveIntensity: HAGALAZ_EMISSIVE_INTENSITY,
+  });
   // the same per-material AgX tone mapping the ship gets (js/utils/toneMapping.js)
   material.outputNode = vec4(agxToneMapping(output.rgb, uniforms.exposure), output.a);
   const mesh = new THREE.InstancedMesh(createStoneGeometry(), material, HAGALAZ_CAP_MAX);
@@ -285,7 +293,11 @@ export const createHagalaz = ({ uniforms, scene, camera, water, physics, listene
   };
 
   if (gui) {
-    const colors = { tint: `#${stormTint.getHexString(THREE.LinearSRGBColorSpace)}`, stone: `#${material.color.getHexString()}` };
+    const colors = {
+      tint: `#${stormTint.getHexString(THREE.LinearSRGBColorSpace)}`,
+      stone: `#${material.color.getHexString()}`,
+      emissive: `#${material.emissive.getHexString()}`,
+    };
     const folder = gui.addFolder('Hagalaz (hail)');
     folder.add({ trigger }, 'trigger').name('trigger');
     folder.add(params, 'skyBrightness', 0, 1, 0.01).name('sky brightness');
@@ -313,6 +325,8 @@ export const createHagalaz = ({ uniforms, scene, camera, water, physics, listene
     folder.add(params, 'restTime', 0, 10, 0.1).name('rest time (s)');
     folder.add(params, 'meltTime', 0.1, 10, 0.1).name('melt time (s)');
     folder.addColor(colors, 'stone').name('stone color').onChange((value) => material.color.set(value));
+    folder.addColor(colors, 'emissive').name('glow color').onChange((value) => material.emissive.set(value));
+    folder.add(material, 'emissiveIntensity', 0, 3, 0.01).name('glow intensity');
     folder.add(params, 'volume', 0, 2, 0.01);
   }
 

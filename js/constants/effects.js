@@ -156,3 +156,6 @@ export const HAGALAZ_REST_TIME = 3;
 export const HAGALAZ_MELT_TIME = 2;
 // stone color (lit, hex sRGB)
 export const HAGALAZ_COLOR = 0xdcebff;
+// a faint glow of their own (emissive), so the stones stay visible against the dark storm sky
+export const HAGALAZ_EMISSIVE = 0x9fc4e8;
+export const HAGALAZ_EMISSIVE_INTENSITY = 0.75;
