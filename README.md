@@ -2,6 +2,18 @@
 
 Write runes into the northern lights.
 
+## Runes
+
+- Sowilo: sun
+- Thurisaz: thunder
+- Laguz: water
+- Kenaz: fire
+- Hagalaz: hail
+- Gebo: gift
+- Isa: ice
+- Dagaz: dawn
+- Tiwaz: Tyr
+
 ## Original shader
 
 The sky is a WGSL port of **"Auroras" by nimitz**:
@@ -9,9 +21,10 @@ https://www.shadertoy.com/view/XtGGRt
 
 ## Credits
 
-- **Aurora shader** — nimitz, see above
+- **Aurora shader** — nimitz, https://www.shadertoy.com/view/XtGGRt
 - $P Point-Cloud Recognizer by Radu-Daniel Vatavu, Lisa Anthony and Jacob O. Wobbrock, https://depts.washington.edu/acelab/proj/dollar/pdollar.html, New BSD License.
-- Viking Boat by Quaternius (https://poly.pizza/u/Quaternius), via Poly Pizza: https://poly.pizza/m/J7SCPiNoSy. Licence: [FILL IN].
+- Viking Boat by Quaternius (https://poly.pizza/u/Quaternius), via Poly Pizza: https://poly.pizza/m/J7SCPiNoSy. Licence: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/) (public domain, no attribution required, credited anyway). The model used here was altered in Blender, so it is not the original.
+- Mountains by Quaternius (https://poly.pizza/u/Quaternius), via Poly Pizza: https://poly.pizza/m/w9VBrh7Nz0. Licence: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/) (public domain, no attribution required, credited anyway). The model used here was altered in Blender, so it is not the original.
 - Music by Claude Houde (https://pixabay.com/users/ob-lix-17147719/) from Pixabay (https://pixabay.com/music/): tracks [109374](https://pixabay.com/users/ob-lix-17147719/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=109374), [109865](https://pixabay.com/users/ob-lix-17147719/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=109865) and [109867](https://pixabay.com/users/ob-lix-17147719/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=109867).
 - Fire sound effect by [Universfield](https://pixabay.com/users/universfield-28281460/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=229156) from [Pixabay](https://pixabay.com/sound-effects/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=229156).
 - Thunder sound: "Thunder_close_Boem.wav" by hantorio, https://freesound.org/s/121946/, licence: [Attribution 3.0](https://creativecommons.org/licenses/by/3.0/).
