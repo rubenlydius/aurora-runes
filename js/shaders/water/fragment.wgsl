@@ -3,6 +3,7 @@
 // and their helpers are available here. Main function first (wgslFn reads its signature), helpers below.
 // (no comments inside the parameter list: wgslFn parses it as text)
 // rippleTime: ripple animation time, summed up in JS from the ripple speed every frame (no jumps when it changes)
+// swellTime: the swell's own time, summed up in JS; it stops while the ice holds the waves (Isa)
 // Ice (Isa), all 0 / off at rest so the water is unchanged:
 //   freezeAmount   0 = open water, 1 = frozen as far as iceRadius; drives a ragged front spreading outward
 //   iceOrigin      world x/z the ice grows from (the shore by the camera)
@@ -26,6 +27,7 @@ fn waterShader(
   rippleScale: f32,
   rippleTime: f32,
   rippleFadeDistance: f32,
+  swellTime: f32,
   shipPosition: vec3f,
   shipRotation: f32,
   shipReflectionSize: vec2f,
@@ -120,7 +122,7 @@ fn waterShader(
   let strength = rippleStrength * exp(-dist / rippleFadeDistance) * (1.0 - ice);
 
   // the big swell's slopes (the vertex shader lifts the surface by the same swell)
-  let sw = swell(worldPos.xz, camPos.xz, iTime, waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance);
+  let sw = swell(worldPos.xz, camPos.xz, swellTime, waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance);
 
   // normal of a height field y = h(x, z) is (-dh/dx, 1, -dh/dz), ripple slopes scaled down to a slight tilt
   var normal = normalize(vec3f(-(dhdx * strength + sw.y), 1.0, -(dhdz * strength + sw.z)));

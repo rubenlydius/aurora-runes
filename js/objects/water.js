@@ -91,7 +91,15 @@ export const createWater = ({
   const waveSpeed = uniform(WAVE_SPEED);
   const waveSharpness = uniform(WAVE_SHARPNESS);
   const waveFadeDistance = uniform(WAVE_FADE_DISTANCE);
-  const swellUniforms = { waveHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance };
+  // ice holding the swell (Isa): 0 = free, 1 = frozen in place. While it rises, the swell's time slows to a stop
+  // and its height is held at what it was when the freeze began (Laguz may keep lowering waveHeight meanwhile);
+  // when it falls again, the height blends back to waveHeight and the waves move on
+  const swellFreeze = { value: 0 };
+  let heldHeight = 0;
+  // the swell's own time and the height the shaders actually use (waveHeight, or held by the ice)
+  const swellTime = uniform(0);
+  const swellHeight = uniform(WAVE_HEIGHT);
+  const swellUniforms = { waveHeight: swellHeight, waveDirection, waveLength, waveSpeed, waveSharpness, waveFadeDistance };
   // ice (Isa): freezeAmount 0 leaves the water unchanged; js/effects/isa.js sets the rest from its constants
   const iceUniforms = {
     freezeAmount: uniform(0),
@@ -108,7 +116,7 @@ export const createWater = ({
   };
 
   const material = new THREE.MeshBasicNodeMaterial();
-  material.positionNode = waterVertex({ localPos: positionLocal, camPos: cameraPosition, iTime, ...swellUniforms });
+  material.positionNode = waterVertex({ localPos: positionLocal, camPos: cameraPosition, swellTime, ...swellUniforms });
   // the shader outputs display-ready (sRGB) colors, convert them to the working color space like the sky
   material.colorNode = colorSpaceToWorking(
     water({
@@ -122,6 +130,7 @@ export const createWater = ({
       rippleScale,
       rippleTime,
       rippleFadeDistance,
+      swellTime,
       shipPosition,
       shipRotation,
       shipReflectionSize,
@@ -157,12 +166,17 @@ export const createWater = ({
 
   const update = (delta) => {
     rippleTime.value += delta * rippleSpeed.value;
+    const freeze = swellFreeze.value;
+    // the moment the ice starts to grip: remember the height to hold
+    if (freeze === 0) heldHeight = waveHeight.value;
+    swellTime.value += delta * (1 - freeze);
+    swellHeight.value = THREE.MathUtils.lerp(waveHeight.value, heldHeight, freeze);
   };
 
   // the swell's height (world units, relative to WATER_LEVEL) at world x, z, exactly like the vertex shader
-  const waveHeightAt = (x, z, time, camPos) => {
-    if (waveHeight.value === 0) return 0;
-    const t = time;
+  const waveHeightAt = (x, z, camPos) => {
+    if (swellHeight.value === 0) return 0;
+    const t = swellTime.value;
     const a = waveDirection.value;
     const l = waveLength.value;
     const v = waveSpeed.value;
@@ -171,7 +185,7 @@ export const createWater = ({
       + swellWave(x, z, t, a + 0.44, l * 0.62, 1.7, v, sharp) * 0.45
       + swellWave(x, z, t, a - 0.61, l * 0.37, 4.1, v, sharp) * 0.25;
     const fade = Math.exp(-Math.hypot(x - camPos.x, z - camPos.z) / waveFadeDistance.value);
-    return sum * (waveHeight.value * fade / 1.7);
+    return sum * (swellHeight.value * fade / 1.7);
   };
 
   if (gui) {
@@ -187,11 +201,12 @@ export const createWater = ({
     folder.add(waveFadeDistance, 'value', 10, 300, 1).name('fade distance');
   }
 
-  // ripple, waves and ice: the uniforms rune effects animate (Laguz, Isa); waveHeightAt: the ship floats on it
+  // ripple, waves and ice: the uniforms rune effects animate (Laguz, Isa); waveHeightAt: the ship floats on it.
+  // waves.height: what Laguz sets; waves.current: the height in use (held while frozen); waves.freeze: Isa's grip
   return {
     mesh,
     ripple: { strength: rippleStrength, speed: rippleSpeed },
-    waves: { height: waveHeight },
+    waves: { height: waveHeight, current: swellHeight, freeze: swellFreeze },
     ice: iceUniforms,
     waveHeightAt,
     update,

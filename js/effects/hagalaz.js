@@ -213,7 +213,6 @@ export const createHagalaz = ({ uniforms, scene, camera, water, physics, listene
     // no room: drop the rest instead of saving them up
     spawnBudget = Math.min(spawnBudget, 1);
 
-    const time = uniforms.iTime.value;
     stones.forEach((stone, index) => {
       if (stone.state === FREE) return;
       const { body } = stone;
@@ -221,7 +220,7 @@ export const createHagalaz = ({ uniforms, scene, camera, water, physics, listene
       stone.age += delta;
 
       // into the water (which moves with the swell): splash and recycle. The water isn't a collider
-      const waterY = WATER_LEVEL + water.waveHeightAt(t.x, t.z, time, camera.position);
+      const waterY = WATER_LEVEL + water.waveHeightAt(t.x, t.z, camera.position);
       if (t.y < waterY) {
         splashes.splash(t.x, waterY, t.z, stone.radius / params.sizeMax);
         recycle(stone, index);

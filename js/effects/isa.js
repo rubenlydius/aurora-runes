@@ -44,7 +44,8 @@ const hooks = {
 
 // Isa (ice): "the fjord freezes". Ice spreads over the water from the shore (water shader, freezeAmount),
 // frost climbs the ship from its waterline (spread shader, planar), the ship stops moving, the aurora freezes
-// in place (auroraSpeed 0, the aurora runs on accumulated time so it holds still instead of jumping), the
+// in place (auroraFreeze: the render loop multiplies auroraSpeed by 1 - auroraFreeze, on accumulated time
+// so it holds still instead of jumping; a factor of its own, so Laguz changing auroraSpeed can't undo it), the
 // light turns colder. Then the ice and frost fade away together (no fronts going back). One GSAP timeline
 export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
   const params = {
@@ -164,10 +165,11 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
     ice.iceFade.value = 1;
     frost.spreadProgress.value = 0;
     frostFade.value = 1;
+    water.waves.freeze.value = 0;
     updateFrostColors();
   };
-  // the aurora speed to return to, read when the effect starts from unfrozen
-  let calmAuroraSpeed = 1;
+  // auroraFreeze: 0..1, read by the render loop (js/script.js): the aurora's speed is multiplied by 1 - it
+  const auroraFreeze = { value: 0 };
 
   // freezeAmount at which the water front reaches the ship (front radius = radius · freeze^curve)
   const freezeAtShip = () => {
@@ -178,7 +180,6 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
 
   let timeline = null;
   const trigger = () => {
-    if (ice.freezeAmount.value === 0) calmAuroraSpeed = uniforms.auroraSpeed.value;
     // retriggered: continue from the current state, only the remaining part of each ramp
     timeline?.kill();
     const freeze = ice.freezeAmount.value;
@@ -196,8 +197,10 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
       .to(frostFade, { value: 1, duration: 1 - frostFade.value, ease: 'sine.out' }, 0)
       // freeze: the water front spreads, the aurora slows to a standstill, the light cools
       .to(ice.freezeAmount, { value: 1, duration: freezeTime, ease: 'none' }, 0)
-      .to(uniforms.auroraSpeed, { value: 0, duration: freezeTime, ease: 'sine.inOut' }, 0)
+      .to(auroraFreeze, { value: 1, duration: freezeTime * (1 - auroraFreeze.value), ease: 'sine.inOut' }, 0)
       .to(mood, { cold: 1, duration: freezeTime, ease: 'sine.inOut' }, 0)
+      // the swell (Laguz) slows to a stop and keeps its shape: the waves freeze where they are
+      .to(water.waves.freeze, { value: 1, duration: freezeTime * (1 - water.waves.freeze.value), ease: 'sine.out' }, 0)
       // when the ice reaches the ship: frost climbs it, its motion eases to a stop
       .to(frost.spreadProgress, { value: 1, duration: params.frostDuration * (1 - frost.spreadProgress.value), ease: 'sine.out' }, shipTime)
       .to(shipFreeze, { value: 1, duration: params.shipStop * (1 - shipFreeze.value), ease: 'sine.out' }, shipTime)
@@ -207,7 +210,9 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
       .to(ice.iceFade, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
       .to(frostFade, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
       .to(shipFreeze, { value: 0, duration: params.thawDuration, ease: 'sine.in' }, thawAt)
-      .to(uniforms.auroraSpeed, { value: calmAuroraSpeed, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
+      // the frozen waves move on and settle to whatever Laguz is doing now
+      .to(water.waves.freeze, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
+      .to(auroraFreeze, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
       .to(mood, { cold: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt);
   };
 
@@ -254,5 +259,5 @@ export const createIsa = ({ uniforms, water, lighting, getShip, gui }) => {
     folder.add(params, 'hemiBoost', 0.5, 4, 0.05).name('fill light boost (×)');
   }
 
-  return { trigger, shipFreeze };
+  return { trigger, shipFreeze, auroraFreeze };
 };

@@ -162,7 +162,8 @@ const draw = () => {
   timer.update();
   uniforms.iTime.value = timer.getElapsed();
   const delta = timer.getDelta();
-  uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value;
+  // Isa's ice stops the aurora (1 - auroraFreeze), whatever auroraSpeed other effects set
+  uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value * (1 - effects.auroraFreeze.value);
   water.update(delta);
   lighting.update(uniforms.iTime.value);
   auroraPointer.update(delta);
@@ -172,8 +173,8 @@ const draw = () => {
     // the ship floats on the swell
     shipUpdate(
       uniforms.iTime.value,
-      (x, z) => water.waveHeightAt(x, z, uniforms.iTime.value, camera.position),
-      water.waves.height.value,
+      (x, z) => water.waveHeightAt(x, z, camera.position),
+      water.waves.current.value,
       // Isa: held still by the ice
       effects.shipFreeze.value,
     );
