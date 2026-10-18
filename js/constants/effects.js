@@ -80,3 +80,39 @@ export const LAGUZ_AURORA_SPEED = 2;
 export const LAGUZ_RAMP_IN = 1.5;
 export const LAGUZ_HOLD = 3;
 export const LAGUZ_RAMP_OUT = 5;
+
+// Kenaz (fire): the sail burns away from the bottom up (js/shaders/spread/fragment.wgsl), then reforms
+export const KENAZ_SOUND = 'sounds/fire.m4a';
+export const KENAZ_VOLUME = 0.8;
+// which sail meshes burn, by material name: the model's sail is Plane (White) and Plane_1 (Red) cloth,
+// Plane_2 (DarkWood) is the mast and yard, which stay
+export const KENAZ_SAIL_MATERIALS = ['White', 'Red'];
+// where the fire starts, as a fraction of the cloth's local bounding box per axis (0.5, 0, 0.5 = bottom centre)
+export const KENAZ_ORIGIN = { x: 0.5, y: 0, z: 0.5 };
+// timing (seconds): burn the whole sail, stay burnt, grow back; the fire (light, embers, sound) fades in
+// and out over KENAZ_FIRE_FADE
+export const KENAZ_BURN_DURATION = 7;
+export const KENAZ_HOLD = 3;
+export const KENAZ_REFORM_DURATION = 3;
+export const KENAZ_FIRE_FADE = 1;
+// burn front: glow color and brightness (emissive), the softer glow while the sail reforms, the burnt color
+export const KENAZ_EDGE_COLOR = 0xff3000;
+export const KENAZ_EDGE_INTENSITY = 2.5;
+export const KENAZ_REFORM_GLOW = 1.5;
+export const KENAZ_CHAR_COLOR = 0x140b07;
+// width of the glowing band and how jagged the front is (fractions of the sail's size), noise bumps across the sail
+export const KENAZ_EDGE_WIDTH = 0.08;
+export const KENAZ_NOISE_STRENGTH = 0.3;
+export const KENAZ_NOISE_SCALE = 6;
+// orange point light at the burn front (physical units, decay 2); flicker: random jitter, ± this fraction
+export const KENAZ_LIGHT_COLOR = 0xff7a2a;
+export const KENAZ_LIGHT_INTENSITY = 25;
+export const KENAZ_LIGHT_FLICKER = 0.35;
+// embers rising from the front: how many at once (at most KENAZ_EMBER_MAX), color, size, rise speed
+// (world units per second) and lifetime (seconds)
+export const KENAZ_EMBER_MAX = 400;
+export const KENAZ_EMBER_COUNT = 150;
+export const KENAZ_EMBER_COLOR = 0xffa040;
+export const KENAZ_EMBER_SIZE = 0.25;
+export const KENAZ_EMBER_RISE = 0.8;
+export const KENAZ_EMBER_LIFETIME = 3;

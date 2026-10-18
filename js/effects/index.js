@@ -4,6 +4,7 @@ import { createRuneLabel } from './runeLabel.js';
 import { createSowilo } from './sowilo.js';
 import { createThurisaz } from './thurisaz.js';
 import { createLaguz } from './laguz.js';
+import { createKenaz } from './kenaz.js';
 
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
@@ -18,6 +19,7 @@ export const createEffects = ({ uniforms, scene, camera, water, getSail, gui }) 
     sowilo: createSowilo({ uniforms, gui }),
     thurisaz: createThurisaz({ uniforms, scene, camera, listener, getSail, gui }),
     laguz: createLaguz({ uniforms, water, listener, gui }),
+    kenaz: createKenaz({ uniforms, scene, camera, listener, getSail, gui }),
   };
 
   window.addEventListener('gesture', (event) => {
