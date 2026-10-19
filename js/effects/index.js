@@ -14,7 +14,8 @@ import { createTiwaz } from './tiwaz.js';
 // connects recognised gestures to effects: js/gestures/gestureInput.js dispatches a "gesture" event
 // (detail { name, score }) on every match, this looks up the effect by name (case-insensitive).
 // new effect: write js/effects/<rune>.js returning a trigger function, add it to `effects` below.
-// returns state the render loop reads: shipFreeze (Isa holds the ship still), auroraFreeze (Isa stops the aurora)
+// returns state the render loop reads: shipFreeze (Isa holds the ship still), auroraFreeze (Isa stops the aurora),
+// and the shared audio listener (the rune menu's mute-all)
 export const createEffects = ({ uniforms, scene, camera, water, lighting, getShip, getSail, physics, gui }) => {
   const label = createRuneLabel({ gui });
   // one audio listener on the camera for all effect sounds
@@ -43,5 +44,5 @@ export const createEffects = ({ uniforms, scene, camera, water, lighting, getShi
     effects[name.toLowerCase()]?.(event.detail);
   });
 
-  return { shipFreeze: isa.shipFreeze, auroraFreeze: isa.auroraFreeze };
+  return { shipFreeze: isa.shipFreeze, auroraFreeze: isa.auroraFreeze, listener };
 };

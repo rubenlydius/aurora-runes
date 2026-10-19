@@ -21,13 +21,21 @@ import { createGestureInput } from './gestures/gestureInput.js';
 import { createEffects } from './effects/index.js';
 import { createBackgroundMusic } from './audio/backgroundMusic.js';
 import { createPhysics } from './physics/world.js';
+import { createLoader } from './ui/loader.js';
+import { createRuneMenu } from './menu/runeMenu.js';
+import { createTutorial } from './ui/tutorial.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
-let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects, menu;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
+// created before anything loads, so the loading manager sees every file
+const loader = createLoader();
+// set by nextFrame(), resolved by draw() once that frame is rendered
+let frameRendered = null;
+const nextFrame = () => new Promise((resolve) => { frameRendered = resolve; });
 
 // uniforms are TSL nodes, we update their .value every frame
 const uniforms = {
@@ -78,12 +86,13 @@ const uniforms = {
 const init = async () => {
   // wgslFn shaders don't run on the WebGL2 fallback
   if (!navigator.gpu) {
-    document.body.innerHTML = '<p style="color:#fff;font-family:sans-serif;padding:2rem">This experience needs WebGPU. Open it in Chrome or Edge.</p>';
-    document.body.style.background = '#000';
+    loader.showUnsupported();
     return;
   }
 
   renderer = new THREE.WebGPURenderer({ canvas: $canvas, alpha: false });
+  // the rune menu is drawn over the main scene, draw() clears by hand
+  renderer.autoClear = false;
 
   camera = createCamera({ far: SKY_RADIUS * 2 });
 
@@ -108,7 +117,7 @@ const init = async () => {
   scene.add(water.mesh);
 
   // the model loads asynchronously, the scene keeps rendering in the meantime
-  createShip({ gui })
+  const shipLoaded = createShip({ gui })
     .then((result) => {
       ship = result.ship;
       sail = result.sail;
@@ -124,7 +133,7 @@ const init = async () => {
     .catch((error) => console.error('Could not load the Viking ship', error));
 
   // same as the ship: loads asynchronously, lit and tone mapped like it
-  createMountains({ gui })
+  const mountainsLoaded = createMountains({ gui })
     .then((mountains) => {
       applyToneMapping(mountains, { renderer, exposure: uniforms.exposure });
       scene.add(mountains);
@@ -153,12 +162,26 @@ const init = async () => {
   // recognised runes -> effects
   effects = createEffects({ uniforms, scene, camera, water, lighting, getShip: () => ship, getSail: () => sail, physics, gui });
   // starts on the first input, rotates through the tracks
-  createBackgroundMusic({ gui });
+  const music = createBackgroundMusic({ gui });
+  // rune rocks (discovered runes, replay), music volume and mute-all
+  menu = createRuneMenu({ renderer, listener: effects.listener, music: music.audio, gui });
+  // how to cast a rune; also reopened from the "?" in the menu
+  const tutorial = createTutorial();
 
   window.addEventListener('resize', resize);
   resize();
 
   renderer.setAnimationLoop(draw);
+
+  // loading screen: Rapier is already running (awaited above); wait for the models and sounds, then for
+  // one rendered frame with all of it in it
+  Promise.all([shipLoaded, mountainsLoaded, menu.loaded, loader.assetsLoaded])
+    .then(nextFrame)
+    .then(loader.hide)
+    // first visit (nothing discovered yet): show how it works
+    .then(() => {
+      if (menu.discoveredCount() === 0) tutorial.open();
+    });
 };
 
 const draw = () => {
@@ -193,7 +216,20 @@ const draw = () => {
   // keep the camera at the center of the sky sphere
   sky.position.copy(camera.position);
 
+  renderer.clear();
   renderer.render(scene, camera);
+
+  // the menu on top: its own scene, the main one keeps running (dimmed) behind it
+  if (menu.isOpen()) {
+    menu.update(delta);
+    renderer.clearDepth();
+    renderer.render(menu.scene, menu.camera);
+  }
+
+  if (frameRendered) {
+    frameRendered();
+    frameRendered = null;
+  }
 
   if (stats) stats.update();
 };
@@ -205,6 +241,7 @@ const resize = () => {
   renderer.getDrawingBufferSize(uniforms.iResolution.value);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  menu.resize();
 };
 
 init();
