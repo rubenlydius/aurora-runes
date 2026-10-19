@@ -42,4 +42,4 @@ https://www.shadertoy.com/view/XtGGRt
 
 ## Course
 
-Made for the Creative Development course @[devine](devine.be). 
+Made for the Creative Development course @ [devine](https://devine.be/). 
