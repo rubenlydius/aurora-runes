@@ -7,7 +7,7 @@
 export const RUNE_GLYPHS = [
   {
     name: 'Thurisaz',
-    meaning: 'Thorn, the giant: thunder and raw force',
+    meaning: 'Giant: Thor\'s lightning, bane of the giants',
     // the thorn sits in the lower half of the stave, like in the templates
     strokes: [
       [[-0.15, -0.5], [-0.15, 0.5]],
@@ -16,7 +16,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Kenaz',
-    meaning: 'Torch: fire, light in the dark',
+    meaning: 'Torch: fire that catches and spreads',
     // full height "<", its point halfway
     strokes: [
       [[0.35, -0.5], [-0.35, 0], [0.35, 0.5]],
@@ -24,7 +24,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Gebo',
-    meaning: 'Gift: exchange and bonds',
+    meaning: 'Gift: stars falling from the sky',
     strokes: [
       [[-0.5, -0.5], [0.5, 0.5]],
       [[0.5, -0.5], [-0.5, 0.5]],
@@ -32,7 +32,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Hagalaz',
-    meaning: 'Hail: the sudden storm',
+    meaning: 'Hail: a storm of ice from above',
     // the bar runs down from the left stave to the right one
     strokes: [
       [[-0.22, -0.5], [-0.22, 0.5]],
@@ -42,14 +42,14 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Isa',
-    meaning: 'Ice: stillness, everything holds',
+    meaning: 'Ice: the fjord freezes, time stands still',
     strokes: [
       [[0, -0.5], [0, 0.5]],
     ],
   },
   {
     name: 'Sowilo',
-    meaning: 'Sun: light and victory',
+    meaning: 'Sun: the midnight sun breaks the night',
     // one zigzag of three strokes, starting top right
     strokes: [
       [[0.17, -0.5], [-0.17, -0.2], [0.17, 0.15], [-0.17, 0.5]],
@@ -57,7 +57,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Tiwaz',
-    meaning: 'Týr: the god\'s spear, justice',
+    meaning: 'Týr: the god\'s spear thrown across the sky',
     // arrow: the arms come down about a third of the height
     strokes: [
       [[0, -0.5], [0, 0.5]],
@@ -66,7 +66,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Laguz',
-    meaning: 'Lake: water, the flow of the sea',
+    meaning: 'Water: the sea rises, the fjord swells',
     // the branch drops about a third of the height
     strokes: [
       [[-0.2, -0.5], [-0.2, 0.5]],
@@ -75,7 +75,7 @@ export const RUNE_GLYPHS = [
   },
   {
     name: 'Dagaz',
-    meaning: 'Day: dawn and awakening',
+    meaning: 'Day: the sky awakens',
     // wide bowtie, about 1.5 times as wide as it is tall
     strokes: [
       [[-0.75, -0.5], [-0.75, 0.5]],
