@@ -11,6 +11,9 @@ const decalSize = new THREE.Vector3();
 const inverse = new THREE.Matrix4();
 // the decal faces the menu camera, which looks straight down -z
 const facingCamera = new THREE.Euler();
+// the decal is lifted this far off the rock (world units, along the surface normals): lying exactly on it,
+// the stone pokes through at the creases between its faces (z-fighting), polygonOffset alone isn't enough
+const DECAL_LIFT = 0.004;
 
 // one rock of the rune menu, with its rune carved in (a decal) and a light for when it glows.
 // group (position, hover) > holder (scale, per-model rotation) > model; the decal and light are children
@@ -73,6 +76,16 @@ export const createRuneRock = ({ model, glyph, glowColor, lightDistance }) => {
     // depth: deep enough for a slightly curved face, not so deep it reaches the back of the rock
     decalSize.set(runeSize, runeSize, runeSize * 0.5);
     const geometry = new DecalGeometry(rockMesh, hit.point, facingCamera, decalSize);
+    const positions = geometry.attributes.position;
+    const normals = geometry.attributes.normal;
+    for (let i = 0; i < positions.count; i++) {
+      positions.setXYZ(
+        i,
+        positions.getX(i) + normals.getX(i) * DECAL_LIFT,
+        positions.getY(i) + normals.getY(i) * DECAL_LIFT,
+        positions.getZ(i) + normals.getZ(i) * DECAL_LIFT,
+      );
+    }
     geometry.applyMatrix4(inverse.copy(group.matrixWorld).invert());
     decal.geometry.dispose();
     decal.geometry = geometry;
