@@ -31,8 +31,10 @@ export const createMenuHud = ({ buttonGlyph }) => {
 
   // x, y: screen position of the point below the rock
   const showLabel = ({ name, meaning, discovered }, x, y) => {
-    $name.textContent = name;
-    $meaning.textContent = discovered ? meaning : `${meaning} · draw it in the sky to discover it`;
+    // undiscovered runes keep their secret
+    $name.textContent = discovered ? name : '???';
+    $meaning.textContent = discovered ? meaning : '';
+    $meaning.hidden = !discovered;
     $label.classList.toggle('menu__label--undiscovered', !discovered);
     $label.style.transform = `translate(${x}px, ${y}px) translateX(-50%)`;
     $label.hidden = false;
