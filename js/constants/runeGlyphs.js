@@ -85,3 +85,12 @@ export const RUNE_GLYPHS = [
     ],
   },
 ];
+
+// the menu button's icon: Othala (inheritance, heritage), not one of the nine menu runes.
+// one polyline (left leg up through the crossing, round the diamond, down the right leg), so the corners join
+export const MENU_BUTTON_GLYPH = {
+  name: 'Othala',
+  strokes: [
+    [[-0.3, 0.5], [0.3, -0.18], [0, -0.5], [-0.3, -0.18], [0.3, 0.5]],
+  ],
+};

@@ -146,8 +146,8 @@ body
 {
     position: absolute;
     right: 1.25rem;
-    /* menu button: 1.25rem from the bottom, 3rem tall */
-    bottom: 5rem;
+    /* menu button: 1.25rem from the bottom, 3.5rem tall */
+    bottom: 5.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -178,7 +178,7 @@ body
     transform: scaleY(0.15);
 }
 
-/* corner button with a rune (Dagaz), and the sound button above it in the same style */
+/* corner button with a rune (Othala), and the sound button above it in the same style */
 .menu-button
 {
     position: fixed;
@@ -192,9 +192,9 @@ body
 .sound__button,
 .help-button
 {
-    width: 3rem;
-    height: 3rem;
-    padding: 0.6rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0.75rem;
     color: #e8f4ff;
     background: rgba(3, 6, 10, 0.5);
     border: 1px solid rgba(232, 244, 255, 0.35);
@@ -212,15 +212,22 @@ body
     height: 100%;
     fill: none;
     stroke: currentColor;
-    stroke-width: 0.14;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    stroke-width: 0.085;
+    /* square ends and corners */
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
 }
 
 .sound__button svg,
 .help-button svg
 {
     stroke-width: 1.2;
+}
+
+.help-button svg rect
+{
+    fill: currentColor;
+    stroke: none;
 }
 
 .menu-button:hover,
@@ -257,7 +264,7 @@ body
 .help-button
 {
     position: absolute;
-    right: 5rem;
+    right: 5.5rem;
     bottom: 1.25rem;
 }
 

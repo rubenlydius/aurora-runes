@@ -13,7 +13,7 @@ export const createMenuHud = ({ buttonGlyph }) => {
   // the button shows a rune, drawn from the same strokes as the carved ones (y down, like SVG)
   const svgNamespace = 'http://www.w3.org/2000/svg';
   const $svg = document.createElementNS(svgNamespace, 'svg');
-  $svg.setAttribute('viewBox', '-1 -0.7 2 1.4');
+  $svg.setAttribute('viewBox', '-0.6 -0.6 1.2 1.2');
   $svg.setAttribute('aria-hidden', 'true');
   for (const stroke of buttonGlyph.strokes) {
     const $line = document.createElementNS(svgNamespace, 'polyline');

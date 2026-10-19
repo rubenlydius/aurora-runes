@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-import { RUNE_GLYPHS } from '../constants/runeGlyphs.js';
+import { RUNE_GLYPHS, MENU_BUTTON_GLYPH } from '../constants/runeGlyphs.js';
 import { MUSIC_VOLUME } from '../constants/audio.js';
 import {
   MENU_ROCK_MODELS,
@@ -28,12 +28,12 @@ import { createMenuHud } from '../ui/menuHud.js';
 import { createProgress } from './progress.js';
 
 // the rune menu: its own scene and camera, rendered on top of the main scene while open (see draw() in
-// js/script.js). Nine rocks with the runes carved in; discovered runes glow, and clicking one replays its
-// effect. A rune is discovered the first time its gesture is drawn ("gesture" event, js/gestures/gestureInput.js).
+// js/script.js). Nine rocks with the runes carved in; discovered runes glow, hovering shows their name and
+// meaning. A rune is discovered the first time its gesture is drawn ("gesture" event, js/gestures/gestureInput.js).
 // listener: the effects' AudioListener, music: the background music's <audio> element (mute-all covers both)
 export const createRuneMenu = ({ renderer, listener, music, gui }) => {
   const progress = createProgress();
-  const hud = createMenuHud({ buttonGlyph: RUNE_GLYPHS.find((glyph) => glyph.name === 'Dagaz') });
+  const hud = createMenuHud({ buttonGlyph: MENU_BUTTON_GLYPH });
 
   const layout = { ...MENU_ROCK_LAYOUT };
   const hover = { ...MENU_HOVER };
@@ -145,7 +145,7 @@ export const createRuneMenu = ({ renderer, listener, music, gui }) => {
     event.stopImmediatePropagation();
   }, { capture: true });
 
-  // --- hover and click ---
+  // --- hover ---
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
@@ -157,19 +157,11 @@ export const createRuneMenu = ({ renderer, listener, music, gui }) => {
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObject(rocksGroup, true).find((h) => h.object.userData.runeRock);
     hovered = hit ? rocks.find((rock) => rock.glyph.name === hit.object.userData.runeRock) : null;
-    hud.$layer.style.cursor = hovered && progress.isDiscovered(hovered.glyph.name) ? 'pointer' : '';
     if (!hovered) hud.hideLabel();
   });
   hud.$layer.addEventListener('pointerleave', () => {
     hovered = null;
     hud.hideLabel();
-  });
-  hud.$layer.addEventListener('click', () => {
-    if (!hovered || !progress.isDiscovered(hovered.glyph.name)) return;
-    const { name } = hovered.glyph;
-    setOpen(false);
-    // the same event a drawn rune sends, so js/effects/index.js plays it (and shows its name)
-    window.dispatchEvent(new CustomEvent('gesture', { detail: { name, score: 1 } }));
   });
 
   // --- discovering ---
