@@ -22,10 +22,11 @@ import { createEffects } from './effects/index.js';
 import { createBackgroundMusic } from './audio/backgroundMusic.js';
 import { createPhysics } from './physics/world.js';
 import { createLoader } from './ui/loader.js';
+import { createRuneMenu } from './menu/runeMenu.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
-let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects, menu;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -89,6 +90,8 @@ const init = async () => {
   }
 
   renderer = new THREE.WebGPURenderer({ canvas: $canvas, alpha: false });
+  // the rune menu is drawn over the main scene, draw() clears by hand
+  renderer.autoClear = false;
 
   camera = createCamera({ far: SKY_RADIUS * 2 });
 
@@ -158,7 +161,9 @@ const init = async () => {
   // recognised runes -> effects
   effects = createEffects({ uniforms, scene, camera, water, lighting, getShip: () => ship, getSail: () => sail, physics, gui });
   // starts on the first input, rotates through the tracks
-  createBackgroundMusic({ gui });
+  const music = createBackgroundMusic({ gui });
+  // rune rocks (discovered runes, replay), music volume and mute-all
+  menu = createRuneMenu({ renderer, listener: effects.listener, music: music.audio, gui });
 
   window.addEventListener('resize', resize);
   resize();
@@ -167,7 +172,7 @@ const init = async () => {
 
   // loading screen: Rapier is already running (awaited above); wait for the models and sounds, then for
   // one rendered frame with all of it in it
-  Promise.all([shipLoaded, mountainsLoaded, loader.assetsLoaded])
+  Promise.all([shipLoaded, mountainsLoaded, menu.loaded, loader.assetsLoaded])
     .then(nextFrame)
     .then(loader.hide);
 };
@@ -204,7 +209,15 @@ const draw = () => {
   // keep the camera at the center of the sky sphere
   sky.position.copy(camera.position);
 
+  renderer.clear();
   renderer.render(scene, camera);
+
+  // the menu on top: its own scene, the main one keeps running (dimmed) behind it
+  if (menu.isOpen()) {
+    menu.update(delta);
+    renderer.clearDepth();
+    renderer.render(menu.scene, menu.camera);
+  }
 
   if (frameRendered) {
     frameRendered();
@@ -221,6 +234,7 @@ const resize = () => {
   renderer.getDrawingBufferSize(uniforms.iResolution.value);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  menu.resize();
 };
 
 init();

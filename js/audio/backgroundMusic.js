@@ -30,4 +30,7 @@ export const createBackgroundMusic = ({ gui }) => {
     folder.add(audio, 'volume', 0, 1, 0.01);
     folder.add({ next: () => audio.dispatchEvent(new Event('ended')) }, 'next').name('next track');
   }
+
+  // the rune menu's volume slider and mute-all use it
+  return { audio };
 };

@@ -11,6 +11,29 @@
 
 <body>
     <canvas id="webgl"></canvas>
+    <!-- rune menu (js/menu/runeMenu.js, js/ui/menuHud.js) -->
+    <div class="menu" hidden>
+        <div class="menu__label" hidden>
+            <p class="menu__name"></p>
+            <p class="menu__meaning"></p>
+        </div>
+        <!-- above the menu button: music volume, and the button mutes all sound -->
+        <div class="sound">
+            <input class="sound__volume" type="range" min="0" max="1" step="0.01" aria-label="Music volume">
+            <button class="sound__button" type="button" aria-label="Mute all sound" aria-pressed="false">
+                <svg viewBox="0 0 14 12" aria-hidden="true">
+                    <line x1="1" y1="4.5" x2="1" y2="7.5" />
+                    <line x1="3" y1="2.5" x2="3" y2="9.5" />
+                    <line x1="5" y1="3.5" x2="5" y2="8.5" />
+                    <line x1="7" y1="1" x2="7" y2="11" />
+                    <line x1="9" y1="3" x2="9" y2="9" />
+                    <line x1="11" y1="2" x2="11" y2="10" />
+                    <line x1="13" y1="4.5" x2="13" y2="7.5" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    <button class="menu-button" type="button" aria-label="Rune menu (Esc)" aria-expanded="false"></button>
     <div class="loader">
     <svg width="323" height="323" viewBox="0 0 323 323" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd"
