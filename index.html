@@ -32,6 +32,49 @@
                 </svg>
             </button>
         </div>
+        <!-- next to the menu button: reopens the tutorial -->
+        <button class="help-button" type="button" aria-label="How to cast a rune">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+                <polyline points="4.5,5 6,2.5 10,2.5 11.5,5 11.5,6.5 8,9 8,11" />
+                <line x1="8" y1="14" x2="8" y2="14.01" />
+            </svg>
+        </button>
+    </div>
+    <!-- tutorial (js/ui/tutorial.js): opens after loading while no rune is discovered yet -->
+    <div class="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+        <div class="tutorial__panel">
+            <h2 class="tutorial__title" id="tutorial-title">Cast a rune</h2>
+            <ol class="tutorial__steps">
+                <li class="tutorial__step">
+                    <div class="tutorial__art">
+                        <span class="tutorial__key tutorial__key--hold">space</span>
+                    </div>
+                    <p>Hold the spacebar</p>
+                </li>
+                <li class="tutorial__step">
+                    <div class="tutorial__art">
+                        <!-- Thurisaz in two strokes (stave, then thorn); the dot is the cursor following them -->
+                        <svg viewBox="0 0 120 80" aria-hidden="true">
+                            <path class="tutorial__stroke tutorial__stroke--first" pathLength="1" d="M50.4 8 L50.4 72" />
+                            <path class="tutorial__stroke tutorial__stroke--second" pathLength="1" d="M50.4 25.9 L69.6 40 L50.4 54.1" />
+                        </svg>
+                        <span class="tutorial__cursor"></span>
+                    </div>
+                    <p>Click and drag to draw a rune in the sky</p>
+                </li>
+                <li class="tutorial__step">
+                    <div class="tutorial__art tutorial__art--cast">
+                        <svg viewBox="0 0 120 80" aria-hidden="true">
+                            <path class="tutorial__rune" d="M50.4 8 L50.4 72 M50.4 25.9 L69.6 40 L50.4 54.1" />
+                        </svg>
+                        <span class="tutorial__key tutorial__key--release">space</span>
+                    </div>
+                    <p>Release the spacebar to cast it</p>
+                </li>
+            </ol>
+            <p class="tutorial__note" hidden>Best experienced on desktop with a mouse and keyboard.</p>
+            <button class="tutorial__close" type="button">Got it</button>
+        </div>
     </div>
     <button class="menu-button" type="button" aria-label="Rune menu (Esc)" aria-expanded="false"></button>
     <div class="loader">

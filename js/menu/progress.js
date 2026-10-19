@@ -29,6 +29,7 @@ export const createProgress = () => {
 
   return {
     isDiscovered: (name) => discovered.has(name),
+    discoveredCount: () => discovered.size,
     // true when the rune is new
     discover: (name) => {
       if (discovered.has(name)) return false;

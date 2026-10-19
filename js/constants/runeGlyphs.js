@@ -8,10 +8,10 @@ export const RUNE_GLYPHS = [
   {
     name: 'Thurisaz',
     meaning: 'Giant: Thor\'s lightning, bane of the giants',
-    // the thorn sits in the lower half of the stave, like in the templates
+    // the thorn sits in the middle of the stave (the templates draw it lower, the carving keeps the classic form)
     strokes: [
       [[-0.15, -0.5], [-0.15, 0.5]],
-      [[-0.15, -0.05], [0.17, 0.2], [-0.15, 0.42]],
+      [[-0.15, -0.22], [0.15, 0], [-0.15, 0.22]],
     ],
   },
   {

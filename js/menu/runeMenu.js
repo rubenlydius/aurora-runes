@@ -300,5 +300,5 @@ export const createRuneMenu = ({ renderer, listener, music, gui }) => {
     folder.close();
   }
 
-  return { scene, camera, loaded, update, resize, isOpen: () => open };
+  return { scene, camera, loaded, update, resize, isOpen: () => open, discoveredCount: progress.discoveredCount };
 };

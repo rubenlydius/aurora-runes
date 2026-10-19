@@ -23,6 +23,7 @@ import { createBackgroundMusic } from './audio/backgroundMusic.js';
 import { createPhysics } from './physics/world.js';
 import { createLoader } from './ui/loader.js';
 import { createRuneMenu } from './menu/runeMenu.js';
+import { createTutorial } from './ui/tutorial.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
@@ -164,6 +165,8 @@ const init = async () => {
   const music = createBackgroundMusic({ gui });
   // rune rocks (discovered runes, replay), music volume and mute-all
   menu = createRuneMenu({ renderer, listener: effects.listener, music: music.audio, gui });
+  // how to cast a rune; also reopened from the "?" in the menu
+  const tutorial = createTutorial();
 
   window.addEventListener('resize', resize);
   resize();
@@ -174,7 +177,11 @@ const init = async () => {
   // one rendered frame with all of it in it
   Promise.all([shipLoaded, mountainsLoaded, menu.loaded, loader.assetsLoaded])
     .then(nextFrame)
-    .then(loader.hide);
+    .then(loader.hide)
+    // first visit (nothing discovered yet): show how it works
+    .then(() => {
+      if (menu.discoveredCount() === 0) tutorial.open();
+    });
 };
 
 const draw = () => {
