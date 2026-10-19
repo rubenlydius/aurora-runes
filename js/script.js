@@ -21,6 +21,7 @@ import { createGestureInput } from './gestures/gestureInput.js';
 import { createEffects } from './effects/index.js';
 import { createBackgroundMusic } from './audio/backgroundMusic.js';
 import { createPhysics } from './physics/world.js';
+import { createLoader } from './ui/loader.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
@@ -28,6 +29,11 @@ let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effect
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
+// created before anything loads, so the loading manager sees every file
+const loader = createLoader();
+// set by nextFrame(), resolved by draw() once that frame is rendered
+let frameRendered = null;
+const nextFrame = () => new Promise((resolve) => { frameRendered = resolve; });
 
 // uniforms are TSL nodes, we update their .value every frame
 const uniforms = {
@@ -78,8 +84,7 @@ const uniforms = {
 const init = async () => {
   // wgslFn shaders don't run on the WebGL2 fallback
   if (!navigator.gpu) {
-    document.body.innerHTML = '<p style="color:#fff;font-family:sans-serif;padding:2rem">This experience needs WebGPU. Open it in Chrome or Edge.</p>';
-    document.body.style.background = '#000';
+    loader.showUnsupported();
     return;
   }
 
@@ -108,7 +113,7 @@ const init = async () => {
   scene.add(water.mesh);
 
   // the model loads asynchronously, the scene keeps rendering in the meantime
-  createShip({ gui })
+  const shipLoaded = createShip({ gui })
     .then((result) => {
       ship = result.ship;
       sail = result.sail;
@@ -124,7 +129,7 @@ const init = async () => {
     .catch((error) => console.error('Could not load the Viking ship', error));
 
   // same as the ship: loads asynchronously, lit and tone mapped like it
-  createMountains({ gui })
+  const mountainsLoaded = createMountains({ gui })
     .then((mountains) => {
       applyToneMapping(mountains, { renderer, exposure: uniforms.exposure });
       scene.add(mountains);
@@ -159,6 +164,12 @@ const init = async () => {
   resize();
 
   renderer.setAnimationLoop(draw);
+
+  // loading screen: Rapier is already running (awaited above); wait for the models and sounds, then for
+  // one rendered frame with all of it in it
+  Promise.all([shipLoaded, mountainsLoaded, loader.assetsLoaded])
+    .then(nextFrame)
+    .then(loader.hide);
 };
 
 const draw = () => {
@@ -194,6 +205,11 @@ const draw = () => {
   sky.position.copy(camera.position);
 
   renderer.render(scene, camera);
+
+  if (frameRendered) {
+    frameRendered();
+    frameRendered = null;
+  }
 
   if (stats) stats.update();
 };
