@@ -1,6 +1,9 @@
 # Aurora Runes
 
-Write runes into the northern lights.
+Write runes into the northern lights and discover the effects of the nine. 
+https://rubenlydius.github.io/aurora-runes/
+
+
 
 ## Runes
 
@@ -37,4 +40,4 @@ https://www.shadertoy.com/view/XtGGRt
 
 ## Course
 
-Made for the Creative Development course @Devine. 
+Made for the Creative Development course @[devine](devine.be). 

@@ -246,9 +246,16 @@ export const ISA_HEMI_BOOST = 1.5;
 export const DAGAZ_INTENSITY = 5;
 export const DAGAZ_HUE_SHIFT = 1;
 export const DAGAZ_SPEED = 4;
-// pulses at the peak: how many, how strong (extra brightness, as a fraction of the peak)
+// pulses: the aurora beats with the heartbeat sound, one pulse per beat found in the file (its "lub" and
+// "dub"); strength: extra brightness at a beat, as a fraction of the peak. Pulse count: only used while the
+// sound hasn't loaded, then the pulses fall back to that many random ones
 export const DAGAZ_PULSE_COUNT = 5;
 export const DAGAZ_PULSE_STRENGTH = 0.5;
+// heartbeat: plays from the peak through the hold and fades out while the aurora settles. It's a steady 60 bpm
+// lub-dub, the first lub about 0.74 s in: starting 0.6 s into the file puts it just after the peak
+export const DAGAZ_HEARTBEAT_SOUND = 'sounds/heartbeat.mp3';
+export const DAGAZ_HEARTBEAT_VOLUME = 0.9;
+export const DAGAZ_HEARTBEAT_OFFSET = 0.6;
 // timing (seconds): build up, hold at the peak (the pulses happen here), ease back
 export const DAGAZ_RAMP_IN = 2;
 export const DAGAZ_HOLD = 4;
