@@ -72,8 +72,6 @@ export const createIsa = ({ uniforms, water, lighting, getShip, listener, gui })
       sound.setVolume(params.volume);
       sound.play();
     },
-    // the thaw starts (ice and frost fade away, aurora speeds up again): no sound yet
-    onThawStart: () => {},
   };
 
   // --- water ice: set the water shader's ice uniforms from the constants ---
@@ -224,7 +222,6 @@ export const createIsa = ({ uniforms, water, lighting, getShip, listener, gui })
       .to(shipFreeze, { value: 1, duration: params.shipStop * (1 - shipFreeze.value), ease: 'sine.out' }, shipTime)
       // hold, then thaw: the ice and frost fade away everywhere at once, the ship comes loose, the aurora
       // speeds up again, the light warms (reset() then clears the fronts for the next freeze)
-      .call(hooks.onThawStart, null, thawAt)
       .to(ice.iceFade, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
       .to(frostFade, { value: 0, duration: params.thawDuration, ease: 'sine.inOut' }, thawAt)
       .to(shipFreeze, { value: 0, duration: params.thawDuration, ease: 'sine.in' }, thawAt)

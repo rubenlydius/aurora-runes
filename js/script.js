@@ -12,7 +12,7 @@ import { createMountains } from './objects/mountains.js';
 import { createCamera, createLookAround } from './objects/camera.js';
 import { createLighting, rawColorFromHex } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
-import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
+import { TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
 import { SUN_GLOW_SIZE, DAWN_HORIZON_COLOR, DAWN_ZENITH_COLOR } from './constants/day.js';
 import {
@@ -48,9 +48,7 @@ const nextFrame = () => new Promise((resolve) => { frameRendered = resolve; });
 
 // uniforms are TSL nodes, we update their .value every frame
 const uniforms = {
-  iTime: uniform(0),
   iResolution: uniform(new THREE.Vector2(2, 2)),
-  auroraColor: uniform(new THREE.Color(AURORA_COLOR)),
   exposure: uniform(TONE_MAPPING_EXPOSURE),
   // fake ship reflection in the water, follows the ship every frame
   shipPosition: uniform(new THREE.Vector3()),
@@ -205,20 +203,20 @@ const init = async () => {
 
 const draw = () => {
   timer.update();
-  uniforms.iTime.value = timer.getElapsed();
+  const elapsed = timer.getElapsed();
   const delta = timer.getDelta();
   adaptiveResolution.update(delta);
   // Isa's ice stops the aurora (1 - auroraFreeze), whatever auroraSpeed other effects set
   uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value * (1 - effects.auroraFreeze.value);
   water.update(delta);
-  lighting.update(uniforms.iTime.value);
+  lighting.update(elapsed);
   auroraPointer.update(delta);
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
     // the ship floats on the swell
     shipUpdate(
-      uniforms.iTime.value,
+      elapsed,
       (x, z) => water.waveHeightAt(x, z, camera.position),
       water.waves.current.value,
       // Isa: held still by the ice

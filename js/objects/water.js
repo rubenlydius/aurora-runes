@@ -33,7 +33,6 @@ const swellWave = (x, z, t, angle, lambda, phase, speed, sharpness) => {
 
 // fjord water that reflects the aurora sky: rippled in the fragment shader, lifted by the swell in the vertex shader
 export const createWater = ({
-  iTime,
   iResolution,
   shipPosition,
   shipRotation,
@@ -126,7 +125,6 @@ export const createWater = ({
       worldPos: positionWorld,
       camPos: cameraPosition,
       fragCoord: screenCoordinate,
-      iTime,
       iResolution,
       baseColor,
       rippleStrength,

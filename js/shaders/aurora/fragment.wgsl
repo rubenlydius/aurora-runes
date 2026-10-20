@@ -25,7 +25,6 @@
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
-  iTime: f32,
   iResolution: vec2f,
   pointerPoint: vec2f,
   pointerStrength: f32,

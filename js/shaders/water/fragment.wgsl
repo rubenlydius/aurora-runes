@@ -21,7 +21,6 @@ fn waterShader(
   worldPos: vec3f,
   camPos: vec3f,
   fragCoord: vec2f,
-  iTime: f32,
   iResolution: vec2f,
   baseColor: vec3f,
   rippleStrength: f32,
@@ -145,7 +144,7 @@ fn waterShader(
   // the sky seen along the bounced ray, computed exactly like the sky sphere does
   // the pointer glow shows up in the reflection too
   let sky = auroraShader(
-    reflDir, fragCoord, iTime, iResolution,
+    reflDir, fragCoord, iResolution,
     pointerPoint, pointerStrength, pointerRadius, pointerBoost, pointerPull, pointerCore, pointerCoreSize,
     pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
     skyBrightness, skyTint, auroraTime,

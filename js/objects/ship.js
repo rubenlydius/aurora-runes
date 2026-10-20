@@ -8,7 +8,6 @@ import { WATER_LEVEL } from '../constants/water.js';
 export const createShip = async ({ gui } = {}) => {
   const loader = new GLTFLoader();
   // BASE_URL is '/aurora-runes/' on GitHub Pages, so never use a root-absolute path here
-  // const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship.glb`);
   const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/viking-ship2.glb`);
 
   // the outer group holds the placement (constants, sliders), the model inside it rocks
@@ -98,5 +97,5 @@ export const createShip = async ({ gui } = {}) => {
     folder.add(float, 'lift', 0, 2, 0.01).name('float lift');
   }
 
-  return { ship, sail, pivot, update };
+  return { ship, sail, update };
 };

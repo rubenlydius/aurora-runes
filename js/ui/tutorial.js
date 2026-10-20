@@ -33,5 +33,5 @@ export const createTutorial = () => {
     }
   }, { capture: true });
 
-  return { open: () => setOpen(true), isOpen: () => open };
+  return { open: () => setOpen(true) };
 };

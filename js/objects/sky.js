@@ -9,7 +9,6 @@ export const SKY_RADIUS = 1000;
 
 // inverted sphere around the camera, the aurora shader paints its inside
 export const createSky = ({
-  iTime,
   iResolution,
   pointerPoint,
   pointerStrength,
@@ -44,7 +43,6 @@ export const createSky = ({
     aurora({
       rayDir: positionWorld.sub(cameraPosition).normalize(),
       fragCoord: screenCoordinate,
-      iTime,
       iResolution,
       pointerPoint,
       pointerStrength,

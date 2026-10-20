@@ -8,7 +8,7 @@ const side = new THREE.Vector3();
 // jagged bolt from start to end by midpoint displacement: each level splits every segment in two and
 // pushes the new midpoint sideways (perpendicular to the bolt), with half the offset of the level before.
 // only midpoints move, so the bolt always ends exactly at `end`
-export const createBoltPoints = (start, end, { detail, jaggedness }) => {
+const createBoltPoints = (start, end, { detail, jaggedness }) => {
   let points = [start.clone(), end.clone()];
   axis.subVectors(end, start).normalize();
   let offset = start.distanceTo(end) * jaggedness;
