@@ -1,6 +1,7 @@
-import { Point, PDollarRecognizer } from '../vendor/pdollar.js';
+import { Point, PDollarRecognizer, PointCloud, GreedyCloudMatch } from '../vendor/pdollar.js';
 import { GESTURE_TEMPLATES } from '../constants/gestureTemplates.js';
 import { GESTURE_MIN_PATH_LENGTH } from '../constants/gestures.js';
+import { breakThurisazLaguzTie } from './tieBreak.js';
 
 // $P changes the array it gets (Resample() splices points into it), so always hand it a copy
 const copyPoints = (points) => points.map((point) => new Point(point.X, point.Y, point.ID));
@@ -29,11 +30,27 @@ export const createRecognizer = () => {
   // big enough to recognize or save? a click without movement would make $P divide by zero
   const isDrawable = (points) => pathLength(points) >= GESTURE_MIN_PATH_LENGTH;
 
-  // returns { name, score } or null when there are no templates yet
-  const recognize = (points) => {
+  // every name with its best (lowest) $P distance, best first: [{ name, distance, score }].
+  // the same match $P's Recognize() does, but kept per name instead of only the winner; the score is $P's
+  // (1 / distance, capped at 1), so close calls often both show 1.00: the distance tells them apart
+  const rank = (points) => {
+    const candidate = new PointCloud('', copyPoints(points));
+    const best = new Map();
+    for (const cloud of recognizer.PointClouds) {
+      const distance = GreedyCloudMatch(candidate.Points, cloud);
+      if (!best.has(cloud.Name) || distance < best.get(cloud.Name)) best.set(cloud.Name, distance);
+    }
+    return [...best]
+      .map(([name, distance]) => ({ name, distance, score: distance > 1 ? 1 / distance : 1 }))
+      .sort((a, b) => a.distance - b.distance);
+  };
+
+  // returns { name, score, top (best 3 of the ranking), tieBreak (see js/gestures/tieBreak.js) },
+  // or null when there are no templates yet. tie: { margin, bendAngle } for the Thurisaz / Laguz tie-breaker
+  const recognize = (points, tie) => {
     if (recognizer.PointClouds.length === 0) return null;
-    const result = recognizer.Recognize(copyPoints(points));
-    return { name: result.Name, score: result.Score };
+    const { ranked, tieBreak } = breakThurisazLaguzTie(points, rank(points), tie);
+    return { name: ranked[0].name, score: ranked[0].score, top: ranked.slice(0, 3), tieBreak };
   };
 
   // adds a template right away, returns how many templates that name has now

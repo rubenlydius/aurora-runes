@@ -20,10 +20,11 @@
 //   auroraHueShift   0 = the original green; up to 1, the lower edge turns pink and the tops violet (through
 //                    cyan and blue), the middle stays green (Dagaz). From 1 to 2 every layer, the middle too,
 //                    turns on to deep red (Tiwaz, rare red aurora). See hueRotate in aurora(). 0 = exactly as it was
+// steps: how many samples aurora() takes through the layers, 50 = the original. Fewer samples spread over the same
+// layers, cheaper but coarser: the water's blurry reflection gets away with about half
 fn auroraShader(
   rayDir: vec3f,
   fragCoord: vec2f,
-  iTime: f32,
   iResolution: vec2f,
   pointerPoint: vec2f,
   pointerStrength: f32,
@@ -47,6 +48,7 @@ fn auroraShader(
   flashAmount: f32,
   auroraIntensity: f32,
   auroraHueShift: f32,
+  steps: f32,
 ) -> vec4f {
   let ro = vec3f(0.0, 0.0, -6.7);
   let viewDir = normalize(rayDir);
@@ -68,7 +70,7 @@ fn auroraShader(
     let result = aurora(
       ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
-      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift,
+      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift, steps,
     );
     var aur = smoothstep(vec4f(0.0), vec4f(1.5), result.col) * fade * night;
     // surge: brighter aurora (only its color: how much it covers the sky behind it, aur.a, stays the same)
@@ -84,7 +86,7 @@ fn auroraShader(
     let result = aurora(
       ro, rd, fragCoord, auroraTime,
       pointerPoint, pointerStrength, pointerRadius, pointerPull, pointerCore, pointerCoreSize,
-      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift,
+      pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount, auroraHueShift, steps,
     );
     var aur = smoothstep(vec4f(0.0), vec4f(2.5), result.col) * night;
     // surge: the reflected aurora brightens the same way
@@ -206,7 +208,13 @@ fn aurora(
   pointerTrailPoints: texture_2d<f32>,
   pointerTrailCount: f32,
   hueShift: f32,
+  steps: f32,
 ) -> AuroraResult {
+  // fewer steps: walk the same 50 layers with a bigger stride. Each sample then stands in for `stride` layers
+  // (its weight times stride), and the running average blends in as much as `stride` original steps would
+  // (1 - 0.5^stride). stride 1 (50 steps) is exactly the original loop
+  let stride = 50.0 / clamp(steps, 1.0, 50.0);
+  let blend = 1.0 - pow(0.5, stride);
   var col = vec4f(0.0);
   var avgCol = vec4f(0.0);
   var glow = 0.0;
@@ -217,8 +225,9 @@ fn aurora(
   let pTrail = (ro + ((0.85 - ro.y) / (rd.y * 2.0 + 0.4)) * rd).zx;
   let trail = pointerStrength * trailDensity(pTrail, pointerTrailPoints, pointerTrailCount, pointerCoreSize * 1.5);
 
-  for (var i = 0.0; i < 50.0; i += 1.0) {
-    let ofs = 0.006 * hash21(fragCoord) * smoothstep(0.0, 15.0, i);
+  for (var i = 0.0; i < 50.0; i += stride) {
+    // the dither jitters each sample by about one layer's spacing: scaled with the stride, it hides the bigger gaps
+    let ofs = 0.006 * stride * hash21(fragCoord) * smoothstep(0.0, 15.0, i);
     var pt = ((0.8 + pow(i, 1.4) * 0.002) - ro.y) / (rd.y * 2.0 + 0.4);
     pt -= ofs;
     let bpos = ro + pt * rd;
@@ -268,8 +277,8 @@ fn aurora(
     let hueAngle = select(hueShift * surgeAngle, redAngle, hueShift > 1.0);
     layerColor = hueRotate(layerColor, hueAngle);
     let col2 = vec4f(layerColor * rzt, rzt);
-    avgCol = mix(avgCol, col2, 0.5);
-    let weight = exp2(-i * 0.065 - 2.5) * smoothstep(0.0, 5.0, i);
+    avgCol = mix(avgCol, col2, blend);
+    let weight = exp2(-i * 0.065 - 2.5) * smoothstep(0.0, 5.0, i) * stride;
     col += avgCol * weight;
     // average closeness over all samples, weighted like the color
     glow += near * weight;

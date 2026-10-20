@@ -203,5 +203,5 @@ export const createMeteors = ({ max }) => {
     colors.needsUpdate = true;
   };
 
-  return { mesh, material, launch, update };
+  return { mesh, launch, update };
 };

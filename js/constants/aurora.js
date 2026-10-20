@@ -35,3 +35,8 @@ export const POINTER_TRAIL_SPACING = 0.03;
 export const POINTER_FOLLOW_SPEED = 15;
 // seconds to fade the glow in on press and out on release
 export const POINTER_FADE_TIME = 1.8;
+
+// samples through the aurora's layers per pixel (performance): 50 is the original shader. The water's reflection
+// is blurred by the ripples and darkened by the Fresnel blend, so it gets away with far fewer; at most 50
+export const AURORA_STEPS = 50;
+export const AURORA_REFLECTION_STEPS = 27;

@@ -331,4 +331,5 @@ function Distance(p1, p2) // Euclidean distance between two points
 //
 // ES module export (added for Aurora Runes; the code above is the unmodified original)
 //
-export { Point, PDollarRecognizer };
+// PointCloud and GreedyCloudMatch also exported (Aurora Runes): js/gestures/recognizer.js ranks every gesture by its raw distance
+export { Point, PDollarRecognizer, PointCloud, GreedyCloudMatch };

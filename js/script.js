@@ -12,10 +12,18 @@ import { createMountains } from './objects/mountains.js';
 import { createCamera, createLookAround } from './objects/camera.js';
 import { createLighting, rawColorFromHex } from './objects/lighting.js';
 import { applyToneMapping } from './utils/toneMapping.js';
-import { AURORA_COLOR, TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
+import { TONE_MAPPING_EXPOSURE } from './constants/lighting.js';
 import { SHIP_REFLECTION } from './constants/scene.js';
 import { SUN_GLOW_SIZE, DAWN_HORIZON_COLOR, DAWN_ZENITH_COLOR } from './constants/day.js';
-import { POINTER_BOOST, POINTER_PULL, POINTER_CORE, POINTER_CREATE, POINTER_TRAIL } from './constants/aurora.js';
+import {
+  POINTER_BOOST,
+  POINTER_PULL,
+  POINTER_CORE,
+  POINTER_CREATE,
+  POINTER_TRAIL,
+  AURORA_STEPS,
+  AURORA_REFLECTION_STEPS,
+} from './constants/aurora.js';
 import { createAuroraPointer, createTrailTexture } from './interaction/auroraPointer.js';
 import { createGestureInput } from './gestures/gestureInput.js';
 import { createEffects } from './effects/index.js';
@@ -24,10 +32,11 @@ import { createPhysics } from './physics/world.js';
 import { createLoader } from './ui/loader.js';
 import { createRuneMenu } from './menu/runeMenu.js';
 import { createTutorial } from './ui/tutorial.js';
+import { createAdaptiveResolution } from './utils/adaptiveResolution.js';
 
 const $canvas = document.getElementById('webgl');
 let renderer, camera, scene, stats;
-let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects, menu;
+let sky, water, ship, sail, shipUpdate, lighting, auroraPointer, physics, effects, menu, adaptiveResolution;
 // copy, so the sliders don't change the constants
 const shipReflection = { ...SHIP_REFLECTION };
 const timer = new THREE.Timer();
@@ -39,9 +48,7 @@ const nextFrame = () => new Promise((resolve) => { frameRendered = resolve; });
 
 // uniforms are TSL nodes, we update their .value every frame
 const uniforms = {
-  iTime: uniform(0),
   iResolution: uniform(new THREE.Vector2(2, 2)),
-  auroraColor: uniform(new THREE.Color(AURORA_COLOR)),
   exposure: uniform(TONE_MAPPING_EXPOSURE),
   // fake ship reflection in the water, follows the ship every frame
   shipPosition: uniform(new THREE.Vector3()),
@@ -80,6 +87,9 @@ const uniforms = {
   // aurora surge (Dagaz): brightness multiplier and hue shift of the aurora only (defaults = unchanged)
   auroraIntensity: uniform(1),
   auroraHueShift: uniform(0),
+  // aurora samples per pixel: the sky, and the water's reflection of it (cheaper, see js/constants/aurora.js)
+  auroraSteps: uniform(AURORA_STEPS),
+  reflectionSteps: uniform(AURORA_REFLECTION_STEPS),
 };
 
 // async: Rapier's WebAssembly has to start before the scene does
@@ -100,6 +110,9 @@ const init = async () => {
 
   // sliders for tweaking constants, only in debug mode
   const gui = DEBUG ? new GUI() : null;
+
+  // lowers the resolution while frames are slow
+  adaptiveResolution = createAdaptiveResolution({ renderer, gui });
 
   // Rapier physics world (Hagalaz hail), stepped in draw()
   physics = await createPhysics({ scene, gui });
@@ -149,6 +162,10 @@ const init = async () => {
     reflectionFolder.add(shipReflection, 'width', 0.1, 5, 0.05).name('half width');
     reflectionFolder.add(shipReflection, 'length', 0.1, 10, 0.05).name('half length');
 
+    const stepsFolder = gui.addFolder('Aurora steps');
+    stepsFolder.add(uniforms.auroraSteps, 'value', 1, 50, 1).name('sky');
+    stepsFolder.add(uniforms.reflectionSteps, 'value', 1, 50, 1).name('reflection');
+
     // fps counter, click it to switch to frame time (ms)
     stats = new Stats();
     document.body.appendChild(stats.dom);
@@ -186,19 +203,20 @@ const init = async () => {
 
 const draw = () => {
   timer.update();
-  uniforms.iTime.value = timer.getElapsed();
+  const elapsed = timer.getElapsed();
   const delta = timer.getDelta();
+  adaptiveResolution.update(delta);
   // Isa's ice stops the aurora (1 - auroraFreeze), whatever auroraSpeed other effects set
   uniforms.auroraTime.value += delta * uniforms.auroraSpeed.value * (1 - effects.auroraFreeze.value);
   water.update(delta);
-  lighting.update(uniforms.iTime.value);
+  lighting.update(elapsed);
   auroraPointer.update(delta);
 
   // the dark patch follows the ship (and its sliders), and stays off until the model has loaded
   if (ship) {
     // the ship floats on the swell
     shipUpdate(
-      uniforms.iTime.value,
+      elapsed,
       (x, z) => water.waveHeightAt(x, z, camera.position),
       water.waves.current.value,
       // Isa: held still by the ice
@@ -235,10 +253,10 @@ const draw = () => {
 };
 
 const resize = () => {
-  // the aurora raymarches 50 steps per pixel and is soft anyway, so render at 1 pixel per CSS pixel
-  renderer.setPixelRatio(1);
+  // at the pixel ratio js/utils/adaptiveResolution.js picked (at most 1 pixel per CSS pixel: the aurora is soft anyway)
   renderer.setSize(window.innerWidth, window.innerHeight, false);
-  renderer.getDrawingBufferSize(uniforms.iResolution.value);
+  // CSS pixels, not the drawing buffer: the stars are sized from this, so they don't jump when the pixel ratio changes
+  uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   menu.resize();

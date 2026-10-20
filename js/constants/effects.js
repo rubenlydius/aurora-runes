@@ -245,7 +245,7 @@ export const ISA_HEMI_BOOST = 1.5;
 // peak values: aurora brightness (×), hue shift (0 = green, 1 = pink lower edge / violet tops), speed
 export const DAGAZ_INTENSITY = 5;
 export const DAGAZ_HUE_SHIFT = 1;
-export const DAGAZ_SPEED = 4;
+export const DAGAZ_SPEED = 5;
 // pulses: the aurora beats with the heartbeat sound, one pulse per beat found in the file (its "lub" and
 // "dub"); strength: extra brightness at a beat, as a fraction of the peak. Pulse count: only used while the
 // sound hasn't loaded, then the pulses fall back to that many random ones

@@ -9,7 +9,6 @@ export const SKY_RADIUS = 1000;
 
 // inverted sphere around the camera, the aurora shader paints its inside
 export const createSky = ({
-  iTime,
   iResolution,
   pointerPoint,
   pointerStrength,
@@ -33,6 +32,7 @@ export const createSky = ({
   flashAmount,
   auroraIntensity,
   auroraHueShift,
+  auroraSteps,
 }) => {
   const geometry = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   const aurora = wgslFn(auroraFragmentShader);
@@ -43,7 +43,6 @@ export const createSky = ({
     aurora({
       rayDir: positionWorld.sub(cameraPosition).normalize(),
       fragCoord: screenCoordinate,
-      iTime,
       iResolution,
       pointerPoint,
       pointerStrength,
@@ -67,6 +66,7 @@ export const createSky = ({
       flashAmount,
       auroraIntensity,
       auroraHueShift,
+      steps: auroraSteps,
     }),
     THREE.SRGBColorSpace,
   );

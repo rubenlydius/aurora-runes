@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 
 import {
+  AURORA_COLOR,
   KEY_LIGHT_POSITION,
   KEY_LIGHT_INTENSITY,
   KEY_LIGHT_PULSE_AMOUNT,
@@ -39,7 +40,7 @@ export const rawColorFromHex = (hex) => new THREE.Color().setHex(hex, THREE.Line
 
 // night lighting: aurora key light, dim fill light and fog (no shadows),
 // plus the midnight sun: a warm sun light, fill and fog that follow dayAmount
-export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, flashAmount, gui }) => {
+export const createLighting = ({ exposure, skyBrightness, dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize, flashAmount, gui }) => {
   const params = {
     keyIntensity: KEY_LIGHT_INTENSITY,
     pulseAmount: KEY_LIGHT_PULSE_AMOUNT,
@@ -60,9 +61,9 @@ export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount
     dayFog: new THREE.Color(DAWN_HORIZON_COLOR),
   };
 
+  // the key light's base color (the aurora's green), before the rune effects tint it
+  const auroraColor = new THREE.Color(AURORA_COLOR);
   const keyLight = new THREE.DirectionalLight(0xffffff, KEY_LIGHT_INTENSITY);
-  // share the uniform's Color object, so changing auroraColor also recolors the light
-  keyLight.color = auroraColor.value;
   // shines from here toward its target, the origin
   keyLight.position.set(KEY_LIGHT_POSITION.x, KEY_LIGHT_POSITION.y, KEY_LIGHT_POSITION.z);
 
@@ -76,13 +77,11 @@ export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount
 
   // set by rune effects: a tint multiplied onto the key light's aurora color (white = unchanged, Isa), a hue
   // offset on that color (fraction of the color wheel, 0 = unchanged, Dagaz), a multiplier on the key light's
-  // intensity (1 = unchanged, Dagaz) and on the fill light's (1 = unchanged, Isa). The key light gets its own
-  // Color for this, so tinting it doesn't recolor the aurora uniform it used to share
+  // intensity (1 = unchanged, Dagaz) and on the fill light's (1 = unchanged, Isa)
   const adjust = { keyTint: new THREE.Color(1, 1, 1), keyHue: 0, keyScale: 1, hemiScale: 1 };
-  keyLight.color = new THREE.Color();
 
   const update = (time) => {
-    keyLight.color.copy(auroraColor.value).multiply(adjust.keyTint);
+    keyLight.color.copy(auroraColor).multiply(adjust.keyTint);
     // skipped at 0: the HSL round trip would change the color by a tiny rounding error
     if (adjust.keyHue !== 0) keyLight.color.offsetHSL(adjust.keyHue, 0, 0);
     // the key light is the aurora's light, so it dims with the sky (skyBrightness, 1 = normal; Hagalaz darkens it)
@@ -103,7 +102,7 @@ export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount
   if (gui) {
     // lil-gui shows colors as sRGB hex strings, Color.set() converts them back to linear
     const colors = {
-      aurora: `#${auroraColor.value.getHexString()}`,
+      aurora: `#${auroraColor.getHexString()}`,
       hemiSky: `#${blend.hemiSky.getHexString()}`,
       hemiGround: `#${hemiLight.groundColor.getHexString()}`,
       fog: `#${blend.fog.getHexString()}`,
@@ -114,7 +113,7 @@ export const createLighting = ({ auroraColor, exposure, skyBrightness, dayAmount
     };
 
     const folder = gui.addFolder('Lighting');
-    folder.addColor(colors, 'aurora').name('aurora color').onChange((value) => auroraColor.value.set(value));
+    folder.addColor(colors, 'aurora').name('aurora color').onChange((value) => auroraColor.set(value));
     folder.add(params, 'keyIntensity', 0, 10, 0.05).name('key intensity');
     folder.add(params, 'pulseAmount', 0, 1, 0.01).name('pulse amount');
     folder.add(params, 'pulseSpeed', 0, 3, 0.01).name('pulse speed');

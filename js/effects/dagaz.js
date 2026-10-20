@@ -89,8 +89,6 @@ export const createDagaz = ({ uniforms, lighting, listener, gui }) => {
 
   // --- sound hooks, the timeline calls these ---
   const hooks = {
-    // the build-up starts
-    onSurgeStart: () => {},
     // the peak is reached: the heartbeat starts (offset seconds into the file), the pulses follow its beats
     onSurgePeak: () => {
       if (!heartbeat.buffer) return;
@@ -178,7 +176,6 @@ export const createDagaz = ({ uniforms, lighting, listener, gui }) => {
       },
     });
     timeline
-      .call(hooks.onSurgeStart, null, 0)
       .to(state, { surge: 1, duration: rampIn, ease: 'sine.inOut' }, 0)
       // any pulse left over from a retrigger settles while it builds up again
       .to(state, { pulse: 0, duration: Math.max(rampIn, 0.2), ease: 'sine.out' }, 0)

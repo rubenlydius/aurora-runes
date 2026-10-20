@@ -97,8 +97,6 @@ export const createTiwaz = ({ uniforms, scene, camera, lighting, listener, gui }
       sound.offset = Math.max(-params.soundDelay, 0);
       sound.play(Math.max(params.soundDelay, 0));
     },
-    // it lands behind the ridge (the impact sound is started just before this, see impactSoundDelay)
-    onImpact: () => {},
     // the impact sound, called impactSoundDelay seconds from the landing (negative = before it)
     onImpactSound: () => {
       if (!impactSound.buffer) return;
@@ -186,7 +184,6 @@ export const createTiwaz = ({ uniforms, scene, camera, lighting, listener, gui }
       .to(mood, { red: 1, duration: params.redIn * (1 - mood.red), ease: 'sine.out' }, 0)
       // impact: the glow behind the ridge flares and fades
       .call(hooks.onImpactSound, null, Math.max(params.flight + params.impactSoundDelay, 0))
-      .call(hooks.onImpact, null, params.flight)
       .to(mood, { glow: 1, duration: params.glowIn, ease: 'sine.out', onUpdate: applyGlow }, params.flight)
       .to(mood, { glow: 0, duration: params.glowOut, ease: 'sine.inOut', onUpdate: applyGlow }, params.flight + params.glowIn)
       // then the red eases back
