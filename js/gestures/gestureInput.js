@@ -1,13 +1,13 @@
 import { Point } from '../vendor/pdollar.js';
 import { createRecognizer } from './recognizer.js';
-import { GESTURE_THRESHOLD } from '../constants/gestures.js';
+import { GESTURE_THRESHOLD, GESTURE_TIE_MARGIN, GESTURE_BEND_ANGLE } from '../constants/gestures.js';
 
 // gesture recognition on the spacebar drawings; listens next to the aurora pointer, doesn't change it.
 // one session = one spacebar hold: every stroke drawn while it's held is part of the same gesture.
 // a match dispatches a "gesture" event on window, detail { name, score } (js/effects/index.js listens)
 export const createGestureInput = ({ canvas, debug, gui }) => {
   const recognizer = createRecognizer();
-  const params = { threshold: GESTURE_THRESHOLD };
+  const params = { threshold: GESTURE_THRESHOLD, tieMargin: GESTURE_TIE_MARGIN, bendAngle: GESTURE_BEND_ANGLE };
 
   // the current session while Space is held: { points: [Point], strokeId }, otherwise null
   let session = null;
@@ -83,16 +83,22 @@ export const createGestureInput = ({ canvas, debug, gui }) => {
       const count = recognizer.addTemplate(selectedName, points);
       console.log(`Saved template "${selectedName}" (${count} for this name)`);
     } else {
-      const result = recognizer.recognize(points);
+      const result = recognizer.recognize(points, { margin: params.tieMargin, bendAngle: params.bendAngle });
       if (!result) {
         console.log('No gesture templates loaded yet');
-      } else if (result.score >= params.threshold) {
-        lastResult = result;
-        console.log(`Gesture: ${result.name} (score ${result.score.toFixed(2)})`);
-        window.dispatchEvent(new CustomEvent('gesture', { detail: result }));
       } else {
-        lastResult = { name: 'no match', score: result.score };
-        console.log(`No match (best: ${result.name}, score ${result.score.toFixed(2)})`);
+        if (debug) {
+          console.log(`Top 3: ${formatTop(result.top)}`);
+          if (result.tieBreak) console.log(`Thurisaz/Laguz tie-breaker: ${formatTieBreak(result.tieBreak)}`);
+        }
+        if (result.score >= params.threshold) {
+          lastResult = result;
+          console.log(`Gesture: ${result.name} (score ${result.score.toFixed(2)})`);
+          window.dispatchEvent(new CustomEvent('gesture', { detail: result }));
+        } else {
+          lastResult = { ...result, name: 'no match' };
+          console.log(`No match (best: ${result.name}, score ${result.score.toFixed(2)})`);
+        }
       }
     }
     updateLabel();
@@ -129,6 +135,8 @@ export const createGestureInput = ({ canvas, debug, gui }) => {
   if (gui) {
     const folder = gui.addFolder('Gestures');
     folder.add(params, 'threshold', 0, 1, 0.01).name('match threshold');
+    folder.add(params, 'tieMargin', 0, 2, 0.01).name('Thurisaz/Laguz margin');
+    folder.add(params, 'bendAngle', 0, 180, 1).name('Thurisaz bend (°)');
   }
 
   // --- debug label ---
@@ -142,11 +150,22 @@ export const createGestureInput = ({ canvas, debug, gui }) => {
       `record mode: ${recordMode ? 'ON' : 'off'}   (R toggle · N name · D export)`,
       `name: ${selectedName ?? '— press N'}`,
       `last: ${lastResult ? `${lastResult.name} (${lastResult.score.toFixed(2)})` : '—'}`,
+      `top 3: ${lastResult?.top ? formatTop(lastResult.top) : '—'}`,
+      `tie-breaker: ${lastResult?.tieBreak ? formatTieBreak(lastResult.tieBreak) : '—'}`,
       `templates: ${counts || 'none'}`,
     ].join('\n');
   }
   updateLabel();
 };
+
+// "Laguz 1.00 (d 0.41) · Thurisaz 1.00 (d 0.62) · ...": $P score and raw distance (lower = closer)
+function formatTop(top) {
+  return top.map(({ name, score, distance }) => `${name} ${score.toFixed(2)} (d ${distance.toFixed(2)})`).join(' · ');
+}
+
+function formatTieBreak({ pick, degrees, at }) {
+  return `${pick} (bend ${degrees.toFixed(0)}° at ${Math.round(at * 100)}% of the stroke)`;
+}
 
 // small fixed text box in the bottom-left corner
 function createLabel() {
