@@ -55,7 +55,7 @@ export const MENU_DIM_OPACITY = 0.7;
 export const MENU_CAMERA = { fov: 40, distance: 6 };
 
 // hover label: distance below the rock center (world units)
-export const MENU_LABEL_OFFSET = 0.6;
+export const MENU_LABEL_OFFSET = 0.4;
 
 // localStorage key for the discovered runes and the audio settings
 export const PROGRESS_STORAGE_KEY = 'aurora-runes:v1';
