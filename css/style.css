@@ -10,6 +10,24 @@ body
     overflow: hidden;
 }
 
+/* fonts from the Adobe Fonts kit in index.html */
+:root
+{
+    --font-title: "p22-numismatic", sans-serif;
+    --font-body: "futura-pt", sans-serif;
+}
+
+body
+{
+    font-family: var(--font-body);
+}
+
+/* buttons don't inherit the font by default */
+button
+{
+    font-family: inherit;
+}
+
 #webgl
 {
     position: fixed;
@@ -73,7 +91,6 @@ body
 
 .loader__message
 {
-    font-family: sans-serif;
     font-size: 1rem;
     color: #fff;
     opacity: 0.8;
@@ -96,7 +113,6 @@ body
     position: fixed;
     inset: 0;
     z-index: 5;
-    font-family: Georgia, serif;
     color: #e8f4ff;
     user-select: none;
 }
@@ -119,6 +135,8 @@ body
 
 .menu__name
 {
+    font-family: var(--font-title);
+    font-weight: 400;
     font-size: 1.2rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -131,12 +149,13 @@ body
     color: #e8f4ff;
     text-shadow: none;
     opacity: 0.7;
+    font-size: 1.75rem;
 }
 
 .menu__meaning
 {
-    margin-top: 0.3rem;
-    font-size: 0.9rem;
+    margin-top: 0.25rem;
+    font-size: 1.125rem;
     font-style: italic;
     opacity: 0.75;
 }
@@ -278,7 +297,6 @@ body
     align-items: center;
     justify-content: center;
     background: rgba(3, 6, 10, 0.75);
-    font-family: Georgia, serif;
     color: #e8f4ff;
     user-select: none;
 }
@@ -301,7 +319,8 @@ body
 
 .tutorial__title
 {
-    font-weight: normal;
+    font-family: var(--font-title);
+    font-weight: 400;
     font-size: 1.5rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -321,7 +340,7 @@ body
 {
     flex: 1;
     counter-increment: step;
-    font-size: 1rem;
+    font-size: 1.125rem;
     line-height: 1.4;
     max-width: 12rem;
 }
@@ -362,7 +381,7 @@ body
     position: relative;
     width: 110px;
     padding: 0.5rem 0;
-    font: 0.8rem sans-serif;
+    font-size: 0.8rem;
     letter-spacing: 0.15em;
     color: rgba(232, 244, 255, 0.8);
     border: 1px solid rgba(232, 244, 255, 0.5);
@@ -455,7 +474,7 @@ body
 .tutorial__close
 {
     padding: 1rem 1.6rem;
-    font: 1.1rem Georgia, serif;
+    font-size: 1.1rem;
     letter-spacing: 0.15em;
     color: var(--aurora-green);
     background: transparent;

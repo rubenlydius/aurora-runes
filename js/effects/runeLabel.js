@@ -17,7 +17,7 @@ export const createRuneLabel = ({ gui }) => {
     top: '12%',
     left: '50%',
     transform: 'translateX(-50%)',
-    font: '300 1.6rem/1 Georgia, serif',
+    font: '400 1.6rem/1 "p22-numismatic", sans-serif',
     letterSpacing: '0.4em',
     textTransform: 'uppercase',
     color: '#e8f4ff',
