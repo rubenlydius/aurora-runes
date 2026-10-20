@@ -16,6 +16,7 @@
 //   iceTint        how much of iceColor shows through the ice's own surface (0..1)
 //   iceBlur        frosted reflection: random tilt of the ice's normal per pixel
 //   crackStrength  brightness of the cracks, crackScale: how many cracks per world unit
+// reflectionSteps: aurora samples for the reflected sky (the sky itself uses 50); the ripples blur it anyway
 fn waterShader(
   worldPos: vec3f,
   camPos: vec3f,
@@ -54,6 +55,7 @@ fn waterShader(
   flashAmount: f32,
   auroraIntensity: f32,
   auroraHueShift: f32,
+  reflectionSteps: f32,
   waveHeight: f32,
   waveDirection: f32,
   waveLength: f32,
@@ -148,7 +150,7 @@ fn waterShader(
     pointerCreate, pointerTrail, pointerTrailPoints, pointerTrailCount,
     skyBrightness, skyTint, auroraTime,
     dayAmount, sunDirection, dawnHorizonColor, dawnZenithColor, sunGlowSize,
-    flashAmount, auroraIntensity, auroraHueShift,
+    flashAmount, auroraIntensity, auroraHueShift, reflectionSteps,
   ).rgb;
 
   // fake ship reflection: the dark hull blocks the sky, so darken the reflection in a soft patch under it

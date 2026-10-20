@@ -33,6 +33,7 @@ export const createSky = ({
   flashAmount,
   auroraIntensity,
   auroraHueShift,
+  auroraSteps,
 }) => {
   const geometry = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   const aurora = wgslFn(auroraFragmentShader);
@@ -67,6 +68,7 @@ export const createSky = ({
       flashAmount,
       auroraIntensity,
       auroraHueShift,
+      steps: auroraSteps,
     }),
     THREE.SRGBColorSpace,
   );
